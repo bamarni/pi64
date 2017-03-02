@@ -7,10 +7,14 @@ apt-get install -y bc build-essential gcc-aarch64-linux-gnu git unzip qemu-user-
 # build kernel
 
 git clone --depth=1 -b rpi-4.8.y https://github.com/raspberrypi/linux.git
+
 cd linux
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bcmrpi3_defconfig
+echo "CONFIG_KEYS_COMPAT=y" >> .config
 make -j 3 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
 cd ..
+
+
 
 # build rootfs
 
@@ -24,11 +28,14 @@ multistrap -a arm64 -d /mnt -f multistrap.conf
 cp fstab /mnt/etc/
 cp /usr/bin/qemu-aarch64-static /mnt/usr/bin/qemu-aarch64-static
 
+mount -o bind /dev /mnt/dev/
+
 chroot /mnt
 
-mount -t proc none /proc
+mount -t proc proc /proc
+mount -t sysfs sys /sys
+
 dpkg --configure -a
-umount /proc
 
 
 
@@ -41,4 +48,13 @@ cp arch/arm64/boot/Image /mnt/boot/kernel8.img
 cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb /mnt/boot/
 echo "kernel=kernel8.img" >> /mnt/boot/config.txt
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=/mnt modules_install
+cd ..
+
+
+
+# compress image
+
+umount /mnt/boot /mnt/proc /mnt/sys /mnt
+mv 2017-02-16-raspbian-jessie-lite.img pi64.img
+tar -zcvf pi64.img.tar.gz pi64.img
 
