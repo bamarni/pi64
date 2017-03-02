@@ -1,12 +1,15 @@
+#!/bin/sh
+
 # dependencies
 
+apt-get update
 apt-get install -y bc build-essential gcc-aarch64-linux-gnu git unzip qemu-user-static
 
 
 
 # build kernel
 
-git clone --depth=1 -b rpi-4.8.y https://github.com/raspberrypi/linux.git
+git clone --depth=1 -b rpi-4.9.y https://github.com/raspberrypi/linux.git
 
 cd linux
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bcmrpi3_defconfig
@@ -37,11 +40,32 @@ mount -t sysfs sys /sys
 
 dpkg --configure -a
 
+sed -i 's/root:x/root:/' /etc/passwd
+
+echo raspberrypi > /etc/hostname
+
+echo 127.0.1.1 raspberrypi >> /etc/hosts
+
+cat >/etc/resolv.conf <<EOL
+nameserver 8.8.8.8
+nameserver 8.8.4.4
+EOL
+
+cat >/etc/fstab <<EOL
+proc            /proc           proc    defaults          0       0
+/dev/mmcblk0p1  /boot           vfat    defaults          0       2
+/dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
+EOL
+
+exit
+
 
 
 # install boot stuff
 
 mount -o loop,offset=4194304,sizelimit=66060288 2017-02-16-raspbian-jessie-lite.img /mnt/boot
+
+sed -i 's/quiet init=\/usr\/lib\/raspi-config\/init_resize.sh//' /mnt/boot/cmdline.txt
 
 cd linux
 cp arch/arm64/boot/Image /mnt/boot/kernel8.img
