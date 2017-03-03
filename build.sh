@@ -28,36 +28,32 @@ mount -o loop,offset=70254592 2017-02-16-raspbian-jessie-lite.img /mnt
 rm -rf /mnt/*
 multistrap -a arm64 -d /mnt -f multistrap.conf
 
-cp fstab /mnt/etc/
 cp /usr/bin/qemu-aarch64-static /mnt/usr/bin/qemu-aarch64-static
 
 mount -o bind /dev /mnt/dev/
 
-chroot /mnt
-
-mount -t proc proc /proc
-mount -t sysfs sys /sys
-
-dpkg --configure -a
-
-sed -i 's/root:x/root:/' /etc/passwd
-
-echo raspberrypi > /etc/hostname
-
-echo 127.0.1.1 raspberrypi >> /etc/hosts
-
-cat >/etc/resolv.conf <<EOL
-nameserver 8.8.8.8
-nameserver 8.8.4.4
-EOL
-
-cat >/etc/fstab <<EOL
+cat >/mnt/etc/fstab <<EOL
 proc            /proc           proc    defaults          0       0
 /dev/mmcblk0p1  /boot           vfat    defaults          0       2
 /dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
 EOL
 
-exit
+mount -t proc proc /mnt/proc
+mount -t sysfs sys /mnt/sys
+
+chroot /mnt /var/lib/dpkg/info/dash.preinst install
+chroot /mnt dpkg --configure -a
+
+sed -i 's/root:x/root:/' /mnt/etc/passwd
+
+echo raspberrypi > /mnt/etc/hostname
+
+echo 127.0.1.1 raspberrypi >> /mnt/etc/hosts
+
+cat >>/mnt/etc/network/interfaces <<EOL
+auto eth0
+iface eth0 inet dhcp
+EOL
 
 
 
@@ -78,7 +74,7 @@ cd ..
 
 # compress image
 
-umount /mnt/boot /mnt/proc /mnt/sys /mnt
+umount /mnt/boot /mnt/dev /mnt/proc /mnt/sys /mnt
 mv 2017-02-16-raspbian-jessie-lite.img pi64.img
 tar -zcvf pi64.img.tar.gz pi64.img
 
