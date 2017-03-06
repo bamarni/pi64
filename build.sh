@@ -78,7 +78,7 @@ cat << EOF | chroot mnt
 export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
 export LC_ALL=C LANGUAGE=C LANG=C
 
-cat > mnt/etc/fstab <<EOL
+cat > /etc/fstab <<EOL
 proc            /proc           proc    defaults          0       0
 /dev/mmcblk0p1  /boot           vfat    defaults          0       2
 /dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
@@ -88,9 +88,13 @@ mount -o bind /dev /dev/
 mount -t proc proc /proc
 mount -t sysfs sys /sys
 
+echo exit 101 > /usr/sbin/policy-rc.d
+chmod +x /usr/sbin/policy-rc.d
 
 /var/lib/dpkg/info/dash.preinst install
 dpkg --configure -a
+
+rm /usr/sbin/policy-rc.d
 
 echo raspberrypi > /etc/hostname
 
