@@ -1,13 +1,17 @@
 #!/bin/sh
 
+set -ex
+
 # dependencies
 
 apt-get update
-apt-get install -y bc build-essential gcc-aarch64-linux-gnu git unzip qemu-user-static
+apt-get install -y bc build-essential gcc-aarch64-linux-gnu git unzip qemu-user-static multistrap
 
 
 mkdir -p build
 cd build
+
+
 
 # build kernel
 
@@ -21,15 +25,58 @@ cd ..
 
 
 
+# build and partition image
+
+fallocate -l 1024M pi64.img
+
+fdisk pi64.img <<EOF
+o
+n
+
+
+8192
+137215
+p
+t
+c
+n
+
+
+8192
+
+
+p
+w
+EOF
+
+parted_out=$(parted -s pi64.img unit b print)
+
+boot_offset=$(echo "$parted_out" | grep -e '^ 1'| xargs echo -n | cut -d" " -f 2 | tr -d B)
+boot_length=$(echo "$parted_out" | grep -e '^ 1'| xargs echo -n | cut -d" " -f 4 | tr -d B)
+
+root_offset=$(echo "$parted_out" | grep -e '^ 2'| xargs echo -n | cut -d" " -f 2 | tr -d B)
+root_length=$(echo "$parted_out" | grep -e '^ 2'| xargs echo -n | cut -d" " -f 4 | tr -d B)
+
+boot_dev=$(losetup --show -f -o ${boot_offset} --sizelimit ${boot_length} pi64.img)
+root_dev=$(losetup --show -f -o ${root_offset} --sizelimit ${root_length} pi64.img)
+
+mkdosfs -n boot -F 32 -v $boot_dev
+mkfs.ext4 -O ^huge_file $root_dev
+
+
+
 # build rootfs
 
-wget https://downloads.raspberrypi.org/raspbian_lite/images/raspbian_lite-2017-02-27/2017-02-16-raspbian-jessie-lite.zip
-unzip 2017-02-16-raspbian-jessie-lite.zip
-
 mkdir -p mnt
-mount -o loop,offset=70254592 2017-02-16-raspbian-jessie-lite.img mnt
-rm -rf mnt/*
+mount -v $root_dev mnt -t ext4
+
 multistrap -a arm64 -d $PWD/mnt -f ../multistrap.conf
+
+cp /usr/bin/qemu-aarch64-static mnt/usr/bin/qemu-aarch64-static
+
+cat << EOF | chroot mnt
+export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
+export LC_ALL=C LANGUAGE=C LANG=C
 
 cat > mnt/etc/fstab <<EOL
 proc            /proc           proc    defaults          0       0
@@ -37,42 +84,40 @@ proc            /proc           proc    defaults          0       0
 /dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
 EOL
 
-mount -o bind /dev mnt/dev/
-mount -t proc proc mnt/proc
-mount -t sysfs sys mnt/sys
+mount -o bind /dev /dev/
+mount -t proc proc /proc
+mount -t sysfs sys /sys
 
-cp /usr/bin/qemu-aarch64-static mnt/usr/bin/qemu-aarch64-static
 
-chroot mnt /var/lib/dpkg/info/dash.preinst install
-chroot mnt dpkg --configure -a
+/var/lib/dpkg/info/dash.preinst install
+dpkg --configure -a
 
-rm mnt/usr/bin/qemu-aarch64-static
+echo raspberrypi > /etc/hostname
 
-sed -i 's/root:x/root:/' mnt/etc/passwd
+echo 127.0.1.1 raspberrypi >> /etc/hosts
 
-echo raspberrypi > mnt/etc/hostname
-
-echo 127.0.1.1 raspberrypi >> mnt/etc/hosts
-
-cat >> mnt/etc/network/interfaces <<EOL
+cat >> /etc/network/interfaces <<EOL
 auto eth0
 iface eth0 inet dhcp
 EOL
 
 useradd -m -p $(perl -e 'print crypt("raspberry", "password")') pi
 echo "pi ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/010_pi-nopasswd
+EOF
+
+rm mnt/usr/bin/qemu-aarch64-static
 
 
 
 # install boot stuff
 
-mount -o loop,offset=4194304,sizelimit=66060288 2017-02-16-raspbian-jessie-lite.img ../mnt/boot
+mkdir -p mnt/boot
+mount -v $boot_dev mnt/boot -t vfat
 
-sed -i 's/quiet init=\/usr\/lib\/raspi-config\/init_resize.sh//' ../mnt/boot/cmdline.txt
+cp -r ../boot/* mnt/boot
 
 cd linux
 cp arch/arm64/boot/Image ../mnt/boot/kernel8.img
-echo "kernel=kernel8.img" >> ../mnt/boot/config.txt
 cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../mnt/boot/
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=$(dirname $PWD)/mnt modules_install
 cd ..
@@ -82,6 +127,4 @@ cd ..
 # compress image
 
 umount mnt/boot mnt/dev mnt/proc mnt/sys mnt
-mv 2017-02-16-raspbian-jessie-lite.img pi64.img
 tar -zcvf pi64.img.tar.gz pi64.img
-
