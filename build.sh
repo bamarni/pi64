@@ -5,7 +5,7 @@ set -ex
 # dependencies
 
 apt-get update
-apt-get install -y bc build-essential gcc-aarch64-linux-gnu git unzip qemu-user-static multistrap
+apt-get install -y bc build-essential gcc-aarch64-linux-gnu git unzip qemu-user-static multistrap zip
 
 
 mkdir -p build
@@ -70,6 +70,9 @@ mkfs.ext4 -O ^huge_file $root_dev
 mkdir -p mnt
 mount -v $root_dev mnt -t ext4
 
+mkdir -p mnt/dev
+mount -o bind /dev mnt/dev
+
 multistrap -a arm64 -d $PWD/mnt -f ../multistrap.conf
 
 cp /usr/bin/qemu-aarch64-static mnt/usr/bin/qemu-aarch64-static
@@ -84,7 +87,6 @@ proc            /proc           proc    defaults          0       0
 /dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
 EOL
 
-mount -o bind /dev /dev/
 mount -t proc proc /proc
 mount -t sysfs sys /sys
 
@@ -105,8 +107,11 @@ auto eth0
 iface eth0 inet dhcp
 EOL
 
-useradd -m -p $(perl -e 'print crypt("raspberry", "password")') pi
+useradd -s /bin/bash --create-home -p $(perl -e 'print crypt("raspberry", "password")') pi
 echo "pi ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/010_pi-nopasswd
+
+apt-get clean
+rm -rf /var/lib/apt/lists/*
 EOF
 
 rm mnt/usr/bin/qemu-aarch64-static
@@ -131,4 +136,4 @@ cd ..
 # compress image
 
 umount mnt/boot mnt/dev mnt/proc mnt/sys mnt
-tar -zcvf pi64.img.tar.gz pi64.img
+zip pi64.img.zip pi64.img
