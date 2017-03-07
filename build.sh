@@ -110,6 +110,27 @@ EOL
 useradd -s /bin/bash --create-home -p $(perl -e 'print crypt("raspberry", "password")') pi
 echo "pi ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/010_pi-nopasswd
 
+cat > /root/init_setup.sh <<EOL
+#!/bin/sh
+
+mount -t proc proc /proc
+mount -t sysfs sys /sys
+mount /boot
+mount -o remount,rw /
+
+parted /dev/mmcblk0 u s resizepart 2 \\\$(expr \\\$(cat /sys/block/mmcblk0/size) - 1)
+resize2fs /dev/mmcblk0p2
+
+sed -i 's| init=/root/init_setup.sh||' /boot/cmdline.txt
+sync
+
+echo 1 > /proc/sys/kernel/sysrq
+rm /root/init_setup.sh
+echo b > /proc/sysrq-trigger
+EOL
+
+chmod +x /root/init_setup.sh
+
 apt-get clean
 rm -rf /var/lib/apt/lists/*
 EOF
