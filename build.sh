@@ -13,18 +13,6 @@ cd build
 
 
 
-# build kernel
-
-git clone --depth=1 -b rpi-4.9.y https://github.com/raspberrypi/linux.git
-
-cd linux
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bcmrpi3_defconfig
-echo "CONFIG_KEYS_COMPAT=y" >> .config
-make -j 3 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
-cd ..
-
-
-
 # build and partition image
 
 fallocate -l 1024M pi64.img
@@ -136,14 +124,23 @@ chmod +x mnt/root/init_setup.sh
 
 
 
-# install boot stuff
+# build kernel and boot stuff
 
 mkdir -p mnt/boot
 mount $boot_dev mnt/boot -t vfat
 
-cp -r ../boot/* mnt/boot
+git clone --depth=1 https://github.com/raspberrypi/firmware
+
+cp -r firmware/boot/* mnt/boot
+echo "kernel=kernel8.img" >> mnt/boot/config.txt
+echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait net.ifnames=0 init=/root/init_setup.sh" > mnt/boot/cmdline.txt
+
+git clone --depth=1 -b rpi-4.9.y https://github.com/raspberrypi/linux.git
 
 cd linux
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bcmrpi3_defconfig
+echo "CONFIG_KEYS_COMPAT=y" >> .config
+make -j 3 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
 cp arch/arm64/boot/Image ../mnt/boot/kernel8.img
 cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../mnt/boot/
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=$(dirname $PWD)/mnt modules_install
