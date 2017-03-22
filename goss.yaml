@@ -1,0 +1,47 @@
+mount:
+  /dev:
+    exists: true
+  /boot:
+    exists: true
+    source: /dev/mmcblk0p1
+    filesystem: vfat
+  /:
+    exists: true
+    source: /dev/root
+    filesystem: ext4
+  /proc:
+    exists: true
+    filesystem: proc
+  /sys:
+    exists: true
+    filesystem: sysfs
+
+package:
+  systemd:
+    installed: true
+  systemd-sysv:
+    installed: true
+  udev:
+    installed: true
+  ssh:
+    installed: true
+  avahi-daemon:
+    installed: true
+
+service:
+  sshd:
+    enabled: true
+    running: true
+  avahi-daemon:
+    enabled: true
+    running: true
+
+user:
+  pi:
+    exists: true
+    uid: 1000
+    gid: 1000
+    groups:
+      - pi
+    home: /home/pi
+    shell: /bin/bash
