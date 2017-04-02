@@ -12,7 +12,9 @@ import (
 )
 
 func initSetup() {
-	fmt.Println("setting $PATH...")
+	time.Sleep(time.Second * 10)
+
+	fmt.Println("Setting $PATH...")
 	os.Setenv("PATH", "/bin:/sbin:/usr/sbin:/usr/bin")
 
 	fmt.Println("Mounting filesystems...")
