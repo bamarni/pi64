@@ -5,7 +5,7 @@ set -ex
 # dependencies
 
 apt-get update
-apt-get install -y bc build-essential gcc-aarch64-linux-gnu git unzip qemu-user-static multistrap zip
+apt-get install -y bc build-essential gcc-aarch64-linux-gnu git unzip qemu-user-static multistrap zip wget
 
 
 mkdir -p build
@@ -89,39 +89,6 @@ auto eth0
 iface eth0 inet dhcp
 EOL
 
-cat > mnt/root/init_setup.sh <<EOL
-#!/bin/sh
-
-export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
-export LC_ALL=C LANGUAGE=C LANG=C
-export PATH=/usr/sbin:/usr/bin:/sbin:/bin
-
-mount -t proc proc /proc
-mount -t sysfs sys /sys
-mount /boot
-mount -o remount,rw /
-
-parted /dev/mmcblk0 u s resizepart 2 \$(expr \$(cat /sys/block/mmcblk0/size) - 1)
-resize2fs /dev/mmcblk0p2
-
-/var/lib/dpkg/info/dash.preinst install
-dpkg --configure -a
-
-rm /usr/sbin/policy-rc.d
-
-useradd -s /bin/bash --create-home -p $(perl -e 'print crypt("raspberry", "password")') pi
-echo "pi ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/010_pi-nopasswd
-
-sed -i 's| init=/root/init_setup.sh||' /boot/cmdline.txt
-sync
-
-echo 1 > /proc/sys/kernel/sysrq
-rm /root/init_setup.sh
-echo b > /proc/sysrq-trigger
-EOL
-
-chmod +x mnt/root/init_setup.sh
-
 
 
 # build kernel and boot stuff
@@ -133,7 +100,7 @@ git clone --depth=1 https://github.com/raspberrypi/firmware
 
 cp -r firmware/boot/* mnt/boot
 echo "kernel=kernel8.img" >> mnt/boot/config.txt
-echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait net.ifnames=0 init=/root/init_setup.sh" > mnt/boot/cmdline.txt
+echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait net.ifnames=0 init=/usr/bin/pi64" > mnt/boot/cmdline.txt
 
 git clone --depth=1 -b rpi-4.9.y https://github.com/raspberrypi/linux.git
 
@@ -145,6 +112,21 @@ cp arch/arm64/boot/Image ../mnt/boot/kernel8.img
 cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../mnt/boot/
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=$(dirname $PWD)/mnt modules_install
 cd ..
+
+
+
+# build pi64 cli tool
+
+if [ ! -d /usr/local/go ]; then
+	wget https://storage.googleapis.com/golang/go1.8.linux-amd64.tar.gz
+	echo "53ab94104ee3923e228a2cb2116e5e462ad3ebaeea06ff04463479d7f12d27ca  go1.8.linux-amd64.tar.gz" | sha256sum -c
+	tar -C /usr/local -xzf go1.8.linux-amd64.tar.gz
+	export PATH=$PATH:/usr/local/go/bin
+fi
+
+cd ..
+GOOS=linux GOARCH=arm64 go build -o ./build/mnt/usr/local/bin/pi64
+cd build
 
 
 
