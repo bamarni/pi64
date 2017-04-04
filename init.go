@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strconv"
 	"syscall"
 	"time"
@@ -14,11 +15,11 @@ import (
 func initSetup() {
 	time.Sleep(time.Second * 10)
 
-	fmt.Println("Setting $PATH...")
-	os.Setenv("PATH", "/bin:/sbin:/usr/sbin:/usr/bin")
+	fmt.Println("Setting env variables...")
+	setEnv()
 
 	fmt.Println("Mounting filesystems...")
-	fmt.Println(mountFilesystems())
+	checkError(mountFilesystems())
 
 	fmt.Println("Expanding root partition...")
 	checkError(expandRootPartition())
@@ -42,17 +43,31 @@ func initSetup() {
 func checkError(err error) {
 	if err != nil {
 		fmt.Println(err)
-		time.Sleep(time.Second * 15)
-		os.Exit(1)
+		sig := make(chan os.Signal)
+		signal.Notify(sig, syscall.SIGINT)
+		for {
+			select {
+			case <-sig:
+			}
+		}
 	}
 }
 
-func runCommand(cmd ...string) error {
-	out, err := exec.Command(cmd[0], cmd[1:]...).CombinedOutput()
+func runCommand(cmd string, args ...string) error {
+	out, err := exec.Command(cmd, args...).CombinedOutput()
 	if err != nil {
-		err = fmt.Errorf("couldn't run command '%s' :\n%s", cmd, out)
+		err = fmt.Errorf("couldn't run command %v :\n%s", append([]string{cmd}, args...), out)
 	}
 	return err
+}
+
+func setEnv() {
+	os.Setenv("PATH", "/bin:/sbin:/usr/sbin:/usr/bin")
+	os.Setenv("LC_ALL", "C")
+	os.Setenv("LANGUAGE", "C")
+	os.Setenv("LANG", "C")
+	os.Setenv("DEBIAN_FRONTEND", "noninteractive")
+	os.Setenv("DEBCONF_NONINTERACTIVE_SEEN", "true")
 }
 
 func mountFilesystems() error {
@@ -91,12 +106,6 @@ func configurePackages() error {
 	if err := ioutil.WriteFile(policyPath, []byte("exit 101\n"), 0755); err != nil {
 		return err
 	}
-
-	os.Setenv("LC_ALL", "C")
-	os.Setenv("LANGUAGE", "C")
-	os.Setenv("LANG", "C")
-	os.Setenv("DEBIAN_FRONTEND", "noninteractive")
-	os.Setenv("DEBCONF_NONINTERACTIVE_SEEN", "true")
 
 	if err := runCommand("/var/lib/dpkg/info/dash.preinst", "install"); err != nil {
 		return err

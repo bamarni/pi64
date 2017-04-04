@@ -105,8 +105,8 @@ echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0
 git clone --depth=1 -b rpi-4.9.y https://github.com/raspberrypi/linux.git
 
 cd linux
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- bcmrpi3_defconfig
-echo "CONFIG_KEYS_COMPAT=y" >> .config
+cp ../../.config ./
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 make -j 3 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
 cp arch/arm64/boot/Image ../mnt/boot/kernel8.img
 cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../mnt/boot/

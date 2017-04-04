@@ -10,6 +10,4 @@ func main() {
 		initSetup()
 		return
 	}
-
-	fmt.Println("PI64 CLI tool")
 }
