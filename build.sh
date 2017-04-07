@@ -66,7 +66,18 @@ chroot mnt apt-get clean
 
 rm -rf mnt/var/lib/apt/lists/*
 
-rm mnt/usr/bin/qemu-aarch64-static
+cat > mnt/etc/apt/sources.list <<EOL
+deb http://deb.debian.org/debian stretch main contrib non-free
+deb-src http://deb.debian.org/debian stretch main contrib non-free
+
+deb http://deb.debian.org/debian stretch-updates main contrib non-free
+deb-src http://deb.debian.org/debian stretch-updates main contrib non-free
+
+deb http://security.debian.org/ stretch/updates main contrib non-free
+deb-src http://security.debian.org/ stretch/updates main contrib non-free
+EOL
+
+rm mnt/etc/apt/sources.list.d/multistrap-debian.list mnt/usr/bin/qemu-aarch64-static
 
 cat > mnt/etc/fstab <<EOL
 proc            /proc           proc    defaults          0       0
