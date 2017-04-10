@@ -111,7 +111,7 @@ git clone --depth=1 https://github.com/raspberrypi/firmware
 
 cp -r firmware/boot/* mnt/boot
 echo "kernel=kernel8.img" >> mnt/boot/config.txt
-echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait net.ifnames=0 init=/usr/bin/pi64" > mnt/boot/cmdline.txt
+echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait net.ifnames=0 init=/usr/bin/pi64-config" > mnt/boot/cmdline.txt
 
 git clone --depth=1 -b rpi-4.9.y https://github.com/raspberrypi/linux.git
 
@@ -136,7 +136,7 @@ fi
 
 cd ..
 export PATH=$PATH:/usr/local/go/bin
-GOOS=linux GOARCH=arm64 go build -o ./build/mnt/usr/bin/pi64
+GOOS=linux GOARCH=arm64 go build -o ./build/mnt/usr/bin/pi64-config
 cd build
 
 

@@ -27,6 +27,9 @@ func initSetup() {
 	fmt.Println("Configuring packages (this may take a few minutes)...")
 	checkError(configurePackages())
 
+	fmt.Println("Removing build packages...")
+	checkError(removeBuildPackages())
+
 	fmt.Println("Adding user...")
 	checkError(addUser())
 
@@ -107,6 +110,12 @@ func configurePackages() error {
 		return err
 	}
 
+	cmd := exec.Command("/usr/bin/debconf-set-selections")
+	cmd.Stdin = bytes.NewReader([]byte("locales locales/default_environment_locale      select  en_US.UTF-8\nlocales locales/locales_to_be_generated multiselect     en_US.UTF-8 UTF-8"))
+	if err := cmd.Run(); err != nil {
+		return err
+	}
+
 	if err := runCommand("/var/lib/dpkg/info/dash.preinst", "install"); err != nil {
 		return err
 	}
@@ -114,6 +123,10 @@ func configurePackages() error {
 		return err
 	}
 	return os.Remove(policyPath)
+}
+
+func removeBuildPackages() error {
+	return runCommand("/usr/bin/apt-get", "remove", "-y", "parted")
 }
 
 func addUser() error {
@@ -129,6 +142,6 @@ func removeInit() error {
 	if err != nil {
 		return err
 	}
-	newLine := bytes.Replace(line, []byte("init=/usr/bin/pi64"), nil, 1)
+	newLine := bytes.Replace(line, []byte("init=/usr/bin/pi64-config"), nil, 1)
 	return ioutil.WriteFile(path, newLine, 0)
 }
