@@ -30,8 +30,11 @@ func initSetup() {
 	fmt.Println("Removing build packages...")
 	checkError(removeBuildPackages())
 
-	fmt.Println("Adding user...")
-	checkError(addUser())
+	fmt.Println("Setting hostname...")
+	checkError(setHostname("raspberrypi"))
+
+	fmt.Println("Adding pi user...")
+	checkError(addPiUser())
 
 	fmt.Println("Self-removing from init...")
 	checkError(removeInit())
@@ -129,7 +132,7 @@ func removeBuildPackages() error {
 	return runCommand("/usr/bin/apt-get", "remove", "-y", "parted")
 }
 
-func addUser() error {
+func addPiUser() error {
 	if err := runCommand("/usr/sbin/useradd", "-s", "/bin/bash", "--create-home", "-p", "paI8KFtCOiEM6", "pi"); err != nil {
 		return err
 	}

@@ -85,13 +85,7 @@ proc            /proc           proc    defaults          0       0
 /dev/mmcblk0p2  /               ext4    defaults,noatime  0       1
 EOL
 
-echo exit 101 > mnt/usr/sbin/policy-rc.d
-
-chmod +x mnt/usr/sbin/policy-rc.d
-
 echo raspberrypi > mnt/etc/hostname
-
-echo 127.0.1.1 raspberrypi >> mnt/etc/hosts
 
 echo nameserver 8.8.8.8 > mnt/etc/resolv.conf
 
