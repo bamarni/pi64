@@ -15,3 +15,5 @@ During first boot the installation process will continue for a few minutes, then
 The default user is `pi` and its password `raspberry`, it has passwordless root privileges escalation through `sudo`.
 
 SSH is enabled by default.
+
+You might want to run `sudo pi64-config` in order to get assisted with your setup!
