@@ -14,6 +14,7 @@ import (
 
 func initSetup() {
 	time.Sleep(time.Second * 10)
+	attachCommand("/usr/bin/clear")
 
 	fmt.Println("Setting env variables...")
 	setEnv()

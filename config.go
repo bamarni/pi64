@@ -10,12 +10,21 @@ import (
 )
 
 const (
+	// available config commands
 	_ int = iota
 	CONFIG_TIMEZONE
 	CONFIG_LOCALES
 	CONFIG_WIFI
 	CHANGE_HOSTNAME
 	CHECK_CPU_FREQ
+
+	// vcgencmd get_throttled result
+	UnderVoltage        int64 = 1
+	FreqCap                   = 1 << 1
+	Throttling                = 1 << 2
+	UnderVoltageOccured       = 1 << 16
+	FreqCapOccured            = 1 << 17
+	Throttled                 = 1 << 18
 )
 
 var commands = map[int]string{
@@ -53,14 +62,6 @@ func main() {
 			return
 		}
 	}
-}
-
-func attachCommand(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
 }
 
 func showMenu() int {
@@ -129,7 +130,7 @@ func changeHostname() {
 		return
 	}
 
-	reboot := showYesNo("The hostname has been updated. However a reboot is required to properly finish this operation.\n\nDo you want to reboot now?")
+	reboot := showYesNo("The hostname has been updated.\n\nA reboot is required to properly finish this operation, do you want to reboot now?")
 	if reboot {
 		attachCommand("/usr/bin/clear")
 		fmt.Println("Rebooting now...")
@@ -138,5 +139,38 @@ func changeHostname() {
 }
 
 func checkCPUFreq() {
-	showMessage("This functionality is not implemented yet.")
+	attachCommand("/usr/bin/dialog", "--infobox", "Running CPU frequency test... (this should take ~5 seconds)", "10", "80")
+	if err := exec.Command("/usr/bin/sysbench", "--test=cpu", "--cpu-max-prime=10000", "--num-threads=4", "run").Run(); err != nil {
+		showMessage("Couldn't run benchmark.")
+		return
+	}
+
+	rawThrottled, err := exec.Command("/usr/sbin/vcgencmd", "get_throttled").Output()
+	len := len(rawThrottled)
+	if err != nil || len < 14 {
+		showMessage("Couldn't run vcgencmd.")
+		return
+	}
+	rawThrottled = rawThrottled[12 : len-1]
+	throttled, err := strconv.ParseInt(string(rawThrottled), 16, 32)
+	if err != nil || len < 14 {
+		showMessage("Couldn't parse throttled output : " + string(rawThrottled))
+		return
+	}
+	if throttled != 0 {
+		var reason []string
+		if throttled&(UnderVoltage|UnderVoltageOccured) != 0 {
+			reason = append(reason, "under-voltage")
+		}
+		if throttled&(FreqCap|FreqCapOccured) != 0 {
+			reason = append(reason, "arm frequency capped")
+		}
+		if throttled&(Throttling|Throttled) != 0 {
+			reason = append(reason, "throttled")
+		}
+		showMessage(fmt.Sprintf("Throttling occured %v, your RPI doesn't perform well under load.\n\nThis usually happens because of a suboptimal power supply cable.", reason))
+		return
+	}
+
+	showMessage("Congratulations! Your RPI performs well under load.")
 }
