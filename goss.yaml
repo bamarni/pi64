@@ -1,6 +1,7 @@
 mount:
   /dev:
     exists: true
+    filesystem: devtmpfs
   /boot:
     exists: true
     source: /dev/mmcblk0p1
@@ -15,6 +16,18 @@ mount:
   /sys:
     exists: true
     filesystem: sysfs
+
+file:
+  /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor:
+    exists: true
+    contains:
+      - ondemand
+
+interfaces:
+    eth0:
+      exists: true
+    #wlan0:
+      #exists: true
 
 package:
   systemd:
