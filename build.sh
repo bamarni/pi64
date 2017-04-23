@@ -101,24 +101,26 @@ EOL
 mkdir -p mnt/boot
 mount $boot_dev mnt/boot -t vfat
 
-git clone --depth=1 https://github.com/raspberrypi/firmware
+[ ! -d ./firmware ] && git clone --depth=1 https://github.com/raspberrypi/firmware
 
 cp -r firmware/boot/* mnt/boot
-echo "kernel=kernel8.img" >> mnt/boot/config.txt
 echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait net.ifnames=0 init=/usr/bin/pi64-config" > mnt/boot/cmdline.txt
 
-git clone --depth=1 -b rpi-4.9.y https://github.com/raspberrypi/linux.git
+[ ! -d ./linux ] && git clone --depth=1 -b rpi-4.9.y https://github.com/raspberrypi/linux.git
 
 cd linux
-sed -i 's/^EXTRAVERSION =.*/EXTRAVERSION = pi64/g' Makefile
+sed -i 's/^EXTRAVERSION =.*/EXTRAVERSION = +pi64/g' Makefile
 cp ../../.config ./
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
-make -j 3 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+make -j $(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
 cp arch/arm64/boot/Image ../mnt/boot/kernel8.img
 cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../mnt/boot/
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=$(dirname $PWD)/mnt modules_install
 cd ..
 
+# https://github.com/RPi-Distro/repo/issues/51
+mkdir -p mnt/lib/firmware/brcm
+wget -P mnt/lib/firmware/brcm https://github.com/RPi-Distro/firmware-nonfree/raw/master/brcm80211/brcm/brcmfmac43430-sdio.txt
 
 
 # build pi64 cli tool
@@ -139,4 +141,5 @@ cd build
 # compress image
 
 umount mnt/boot mnt
+losetup -d $boot_dev $root_dev
 zip pi64.zip pi64.img
