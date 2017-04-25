@@ -16,4 +16,4 @@ The default user is `pi` and its password `raspberry`, it has passwordless root 
 
 SSH is enabled by default.
 
-You might want to run `sudo pi64-config` in order to get assisted with your setup!
+Once logged in, you might want to run `sudo pi64-config` in order to get assisted with your setup!

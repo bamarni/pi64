@@ -1,10 +1,13 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
+	"strings"
 )
 
 func attachCommand(name string, args ...string) error {
@@ -33,4 +36,26 @@ func setHostname(hostname string) error {
 	}
 
 	return ioutil.WriteFile("/etc/hosts", hosts, 0644)
+}
+
+func scanSSIDs() ([]string, error) {
+	var out bytes.Buffer
+	cmd := exec.Command("/sbin/iwlist", "wlan0", "scan")
+	cmd.Stdout = &out
+	if err := cmd.Run(); err != nil {
+		return nil, err
+	}
+
+	var ssids []string
+	scanner := bufio.NewScanner(&out)
+	for scanner.Scan() {
+		line := strings.TrimLeft(scanner.Text(), " ")
+		if !strings.HasPrefix(line, "ESSID") {
+			continue
+		}
+		if splits := strings.Split(line, `"`); len(splits) == 3 {
+			ssids = append(ssids, splits[1])
+		}
+	}
+	return ssids, nil
 }

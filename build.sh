@@ -90,9 +90,20 @@ echo raspberrypi > mnt/etc/hostname
 echo nameserver 8.8.8.8 > mnt/etc/resolv.conf
 
 cat >> mnt/etc/network/interfaces <<EOL
-auto eth0
+allow-hotplug eth0
 iface eth0 inet dhcp
+
+allow-hotplug wlan0
+iface wlan0 inet dhcp
+    wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
 EOL
+
+cat > mnt/etc/wpa_supplicant/wpa_supplicant.conf <<EOL
+ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev
+update_config=1
+EOL
+
+chmod 600 mnt/etc/wpa_supplicant/wpa_supplicant.conf
 
 
 
@@ -104,7 +115,7 @@ mount $boot_dev mnt/boot -t vfat
 [ ! -d ./firmware ] && git clone --depth=1 https://github.com/raspberrypi/firmware
 
 cp -r firmware/boot/* mnt/boot
-echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait net.ifnames=0 init=/usr/bin/pi64-config" > mnt/boot/cmdline.txt
+echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait loglevel=3 net.ifnames=0 init=/usr/bin/pi64-config" > mnt/boot/cmdline.txt
 
 [ ! -d ./linux ] && git clone --depth=1 -b rpi-4.9.y https://github.com/raspberrypi/linux.git
 

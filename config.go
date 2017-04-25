@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io/ioutil"
@@ -100,7 +101,7 @@ func showPrompt(kind, msg string, args ...string) string {
 func configureTimezone() {
 	if err := attachCommand("/usr/sbin/dpkg-reconfigure", "tzdata"); err != nil {
 		fmt.Println("Couldn't configure timezone.")
-		os.Exit(1)
+		return
 	}
 	showMessage("Timezone has been configured.")
 }
@@ -109,13 +110,65 @@ func configureLocales() {
 	showMessage("A list of generatable locales will be prompted.\n\nPlease use [SPACE] to select from that list.")
 	if err := attachCommand("/usr/sbin/dpkg-reconfigure", "locales"); err != nil {
 		fmt.Println("Couldn't configure locales.")
-		os.Exit(1)
+		return
 	}
 	showMessage("Locales have been configured.")
 }
 
 func configureWifi() {
-	showMessage("This functionality is not implemented yet.")
+	ssids, err := scanSSIDs()
+	if err != nil || len(ssids) == 0 {
+		showMessage("Couldn't scan for SSIDs.")
+		return
+	}
+	args := []string{"0"}
+	for i, ssid := range ssids {
+		args = append(args, strconv.Itoa(i), ssid)
+	}
+	res, err := strconv.Atoi(showPrompt("menu", "Available Wi-Fi SSIDs", args...))
+	if err != nil {
+		showMessage("SSID not provided, aborting.")
+		return
+	}
+	ssid := ssids[res]
+
+	passphrase := showPrompt("passwordbox", "Passphrase for "+ssid)
+	if err != nil {
+		showMessage("Passphrase not provided, aborting.")
+		return
+	}
+
+	attachCommand("/usr/bin/dialog", "--infobox", "Configuring Wi-Fi...", "10", "80")
+
+	configFile, err := os.OpenFile("/etc/wpa_supplicant/wpa_supplicant.conf", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		showMessage("Couldn't open /etc/wpa_supplicant/wpa_supplicant.conf")
+		return
+	}
+	config := bufio.NewWriter(configFile)
+	config.Write([]byte("ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\nupdate_config=1\n"))
+
+	cmd := exec.Command("/usr/bin/wpa_passphrase", ssid, passphrase)
+	cmd.Stdout = config
+	if err := cmd.Run(); err != nil {
+		showMessage("Couldn't generate passphrase.")
+		return
+	}
+	if err := config.Flush(); err != nil {
+		showMessage("Couldn't write /etc/wpa_supplicant/wpa_supplicant.conf")
+		return
+	}
+
+	if err := exec.Command("/sbin/ifdown", "wlan0").Run(); err != nil {
+		showMessage("Couldn't bring wlan0 interface down.")
+		return
+	}
+	if err := exec.Command("/sbin/ifup", "wlan0").Run(); err != nil {
+		showMessage("Couldn't bring wlan0 interface up.")
+		return
+	}
+
+	showMessage("Wi-Fi has been configured.")
 }
 
 func changeHostname() {
