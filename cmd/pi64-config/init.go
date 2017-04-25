@@ -10,11 +10,14 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	"github.com/bamarni/pi64/pkg/networking"
+	"github.com/bamarni/pi64/pkg/util"
 )
 
 func initSetup() {
-	time.Sleep(time.Second * 10)
-	attachCommand("/usr/bin/clear")
+	time.Sleep(time.Second * 8)
+	util.AttachCommand("/usr/bin/clear")
 
 	fmt.Println("Setting env variables...")
 	setEnv()
@@ -32,7 +35,7 @@ func initSetup() {
 	checkError(removeBuildPackages())
 
 	fmt.Println("Setting hostname...")
-	checkError(setHostname("raspberrypi"))
+	checkError(networking.SetHostname("raspberrypi"))
 
 	fmt.Println("Adding pi user...")
 	checkError(addPiUser())

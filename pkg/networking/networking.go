@@ -1,24 +1,15 @@
-package main
+package networking
 
 import (
 	"bufio"
 	"bytes"
 	"io/ioutil"
-	"os"
 	"os/exec"
 	"regexp"
 	"strings"
 )
 
-func attachCommand(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
-}
-
-func setHostname(hostname string) error {
+func SetHostname(hostname string) error {
 	if err := ioutil.WriteFile("/etc/hostname", []byte(hostname+"\n"), 0644); err != nil {
 		return err
 	}
@@ -38,9 +29,9 @@ func setHostname(hostname string) error {
 	return ioutil.WriteFile("/etc/hosts", hosts, 0644)
 }
 
-func scanSSIDs() ([]string, error) {
+func ScanSSIDs() ([]string, error) {
 	var out bytes.Buffer
-	cmd := exec.Command("/sbin/iwlist", "wlan0", "scan")
+	cmd := exec.Command("iwlist", "wlan0", "scan")
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
 		return nil, err

@@ -144,7 +144,7 @@ fi
 
 cd ..
 export PATH=$PATH:/usr/local/go/bin
-GOOS=linux GOARCH=arm64 go build -o ./build/mnt/usr/bin/pi64-config
+GOOS=linux GOARCH=arm64 go build -o ./build/mnt/usr/bin/pi64-config ./cmd/pi64-config
 cd build
 
 
