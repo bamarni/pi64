@@ -1,4 +1,4 @@
-package main
+package setup
 
 import (
 	"bytes"
@@ -15,7 +15,7 @@ import (
 	"github.com/bamarni/pi64/pkg/util"
 )
 
-func initSetup() {
+func Finish() {
 	time.Sleep(time.Second * 8)
 	util.AttachCommand("/usr/bin/clear")
 

@@ -12,7 +12,7 @@ import (
 )
 
 func configureWifi() {
-	ssids, err := networking.ScanSSIDs()
+	ssids, err := networking.ScanSSIDs("wlan0")
 	if err != nil || len(ssids) == 0 {
 		dialog.Message("Couldn't scan for SSIDs.")
 		return
@@ -55,12 +55,12 @@ func configureWifi() {
 		return
 	}
 
-	if err := exec.Command("/sbin/ifdown", "wlan0").Run(); err != nil {
-		dialog.Message("Couldn't bring wlan0 interface down.")
+	if err := networking.Ifdown("wlan0"); err != nil {
+		dialog.Message("Couldn't bring wlan0 interface down : " + err.Error())
 		return
 	}
-	if err := exec.Command("/sbin/ifup", "wlan0").Run(); err != nil {
-		dialog.Message("Couldn't bring wlan0 interface up.")
+	if err := networking.Ifup("wlan0"); err != nil {
+		dialog.Message("Couldn't bring wlan0 interface up : " + err.Error())
 		return
 	}
 

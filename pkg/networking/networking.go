@@ -29,9 +29,17 @@ func SetHostname(hostname string) error {
 	return ioutil.WriteFile("/etc/hosts", hosts, 0644)
 }
 
-func ScanSSIDs() ([]string, error) {
+func Ifup(iface string) error {
+	return exec.Command("ifup", iface).Run()
+}
+
+func Ifdown(iface string) error {
+	return exec.Command("ifdown", iface).Run()
+}
+
+func ScanSSIDs(iface string) ([]string, error) {
 	var out bytes.Buffer
-	cmd := exec.Command("iwlist", "wlan0", "scan")
+	cmd := exec.Command("iwlist", iface, "scan")
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
 		return nil, err

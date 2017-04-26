@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/bamarni/pi64/cmd/pi64-config/setup"
 	"github.com/bamarni/pi64/pkg/dialog"
 )
 
@@ -27,7 +28,7 @@ var commands = map[int]string{
 
 func main() {
 	if os.Getpid() == 1 {
-		initSetup()
+		setup.Finish()
 		return
 	}
 
