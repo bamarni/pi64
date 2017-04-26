@@ -91,10 +91,10 @@ echo nameserver 8.8.8.8 > mnt/etc/resolv.conf
 
 cat >> mnt/etc/network/interfaces <<EOL
 allow-hotplug eth0
-iface eth0 inet dhcp
+iface eth0 inet manual
 
 allow-hotplug wlan0
-iface wlan0 inet dhcp
+iface wlan0 inet manual
     wpa-conf /etc/wpa_supplicant/wpa_supplicant.conf
 EOL
 
