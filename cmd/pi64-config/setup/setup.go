@@ -16,10 +16,10 @@ import (
 )
 
 func Finish() {
-	time.Sleep(time.Second * 8)
+	time.Sleep(time.Second * 3)
 	util.AttachCommand("/usr/bin/clear")
 
-	fmt.Println("Setting env variables...")
+	fmt.Println(util.Logo() + "\n\n")
 	setEnv()
 
 	fmt.Println("Mounting filesystems...")
