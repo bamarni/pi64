@@ -5,7 +5,7 @@ set -ex
 # dependencies
 
 apt-get update
-apt-get install -y bc build-essential gcc-aarch64-linux-gnu git unzip qemu-user-static multistrap zip wget
+apt-get install -y bc build-essential cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu git unzip qemu-user-static multistrap zip wget
 
 
 mkdir -p build
@@ -104,6 +104,15 @@ update_config=1
 EOL
 
 chmod 600 mnt/etc/wpa_supplicant/wpa_supplicant.conf
+
+[ ! -d ./userland ] && git clone --depth=1 https://github.com/raspberrypi/userland
+
+mkdir -p ./userland/build && cd ./userland/build
+cmake -DCMAKE_SYSTEM_NAME=Linux -DCMAKE_BUILD_TYPE=release -DARM64=ON -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ -DCMAKE_ASM_COMPILER=aarch64-linux-gnu-gcc -DVIDEOCORE_BUILD_DIR=/opt/vc ../
+make -j $(nproc)
+cd ../../
+mkdir -p mnt/opt && mv /opt/vc mnt/opt/
+mv mnt/opt/vc/bin/* mnt/usr/bin/
 
 
 

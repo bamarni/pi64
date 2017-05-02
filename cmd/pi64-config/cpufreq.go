@@ -19,6 +19,7 @@ func checkCPUFreq() {
 	throttled, err := vchiq.GetThrottled()
 	if err != nil {
 		dialog.Message(err.Error())
+		return
 	}
 	if throttled != 0 {
 		var reason []string
