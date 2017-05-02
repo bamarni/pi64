@@ -31,9 +31,6 @@ func Finish() {
 	fmt.Println("Configuring packages (this may take a few minutes)...")
 	checkError(configurePackages())
 
-	fmt.Println("Removing build packages...")
-	checkError(removeBuildPackages())
-
 	fmt.Println("Setting hostname...")
 	checkError(networking.SetHostname("raspberrypi"))
 
@@ -42,6 +39,10 @@ func Finish() {
 
 	fmt.Println("Self-removing from init...")
 	checkError(removeInit())
+
+	fmt.Println("Running setup script (/boot/setup)...")
+	util.AttachCommand("/bin/bash", "/boot/setup")
+	os.Remove("/boot/setup")
 
 	fmt.Println("Installation succeeded! Rebooting in 5 seconds...")
 	time.Sleep(time.Second * 5)
@@ -130,10 +131,6 @@ func configurePackages() error {
 		return err
 	}
 	return os.Remove(policyPath)
-}
-
-func removeBuildPackages() error {
-	return runCommand("/usr/bin/apt-get", "remove", "-y", "parted")
 }
 
 func addPiUser() error {

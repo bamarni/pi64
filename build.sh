@@ -126,6 +126,8 @@ mount $boot_dev mnt/boot -t vfat
 cp -r firmware/boot/* mnt/boot
 echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait loglevel=3 net.ifnames=0 init=/usr/bin/pi64-config" > mnt/boot/cmdline.txt
 
+echo "apt-get autoremove --purge -y parted" > mnt/boot/setup
+
 [ ! -d ./linux ] && git clone --depth=1 -b rpi-4.11.y https://github.com/raspberrypi/linux.git
 
 cd linux
@@ -141,6 +143,7 @@ cd ..
 # https://github.com/RPi-Distro/repo/issues/51
 mkdir -p mnt/lib/firmware/brcm
 wget -P mnt/lib/firmware/brcm https://github.com/RPi-Distro/firmware-nonfree/raw/master/brcm80211/brcm/brcmfmac43430-sdio.txt
+
 
 
 # build pi64 cli tool
