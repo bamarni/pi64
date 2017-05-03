@@ -125,6 +125,7 @@ mount $boot_dev mnt/boot -t vfat
 
 cp -r firmware/boot/* mnt/boot
 echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait loglevel=3 net.ifnames=0 init=/usr/bin/pi64-config" > mnt/boot/cmdline.txt
+echo "dtparam=audio=on" > mnt/boot/config.txt
 
 echo "apt-get autoremove --purge -y parted" > mnt/boot/setup
 
