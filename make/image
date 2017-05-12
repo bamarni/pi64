@@ -1,0 +1,64 @@
+#!/usr/bin/env bash
+
+set -ex
+
+version=${1:-lite}
+
+root_devmap=$(pi64-build -build-dir ./build -version $version)
+
+cd build
+
+# install videocore
+
+mkdir -p root-$version/opt
+cp -R /opt/vc root-$version/opt/
+mv root-$version/opt/vc/bin/* root-$version/usr/bin/
+
+# install kernel and boot stuff
+
+[ ! -d ./firmware ] && git clone --depth=1 https://github.com/raspberrypi/firmware
+
+cp -r firmware/boot/{bootcode.bin,fixup*.dat,start*.elf,overlays,LICENCE.broadcom} boot-$version
+echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait loglevel=3 net.ifnames=0 init=/usr/bin/pi64-config" > boot-$version/cmdline.txt
+echo "dtparam=audio=on" > boot-$version/config.txt
+
+cd linux
+cp arch/arm64/boot/Image ../boot-$version/kernel8.img
+cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../boot-$version/
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=$(dirname $PWD)/root-$version modules_install
+cd ..
+
+# https://github.com/RPi-Distro/repo/issues/51
+mkdir -p root-$version/lib/firmware/brcm
+wget -P root-$version/lib/firmware/brcm https://github.com/RPi-Distro/firmware-nonfree/raw/master/brcm80211/brcm/brcmfmac43430-sdio.txt
+
+# build pi64 cli tool
+GOOS=linux GOARCH=arm64 go build -o ./root-$version/usr/bin/pi64-config github.com/bamarni/pi64/cmd/pi64-config
+
+# shrink and compress image
+
+umount --lazy boot-$version root-$version
+
+min_root_size=$(resize2fs -P $root_devmap | sed 's/Estimated minimum size of the filesystem: //')
+e2fsck -f $root_devmap
+resize2fs $root_devmap $min_root_size
+last_sector=$(echo "$min_root_size * 8 + 137215" | bc)
+sync
+
+kpartx -d ./pi64-$version.img
+
+fdisk ./pi64-$version.img <<EOF
+d
+2
+n
+p
+2
+137216
+$last_sector
+w
+EOF
+
+truncate --size=$(echo "($last_sector + 1) * 512" |bc) pi64-$version.img
+sync
+
+zip pi64-$version.zip pi64-$version.img

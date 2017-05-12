@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+set -ex
+
+mkdir -p build && cd build
+
+git clone --depth=1 -b rpi-4.11.y https://github.com/raspberrypi/linux.git
+
+cd linux
+
+sed -i 's/^EXTRAVERSION =.*/EXTRAVERSION = +pi64/g' Makefile
+
+cp ../../.config ./
+
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+
+make -j $(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
