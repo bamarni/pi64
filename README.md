@@ -6,11 +6,11 @@ pi64 is an experimental 64-bit OS for the Raspberry Pi 3. It is based on Debian 
 
 The latest images are always available in the [releases](https://github.com/bamarni/pi64/releases) section.
 
-There are 2 versions : lite and desktop. The desktop version is based on [LXDE](http://lxde.org/) .
+There are 2 versions : `lite` and `desktop`. The desktop version is based on [LXDE](http://lxde.org/).
 
 ## Installation
 
-Once downloaded, you can follow the [official instructions](https://www.raspberrypi.org/documentation/installation/installing-images/README.md) for writing it to your SD card.
+Once downloaded, you can follow the [these instructions](https://www.raspberrypi.org/documentation/installation/installing-images/README.md) for writing the image to your SD card.
 
 During first boot the installation process will continue for a few minutes, then the Raspberry Pi will reboot and you'll be ready to go.
 
