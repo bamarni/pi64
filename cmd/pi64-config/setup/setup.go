@@ -28,7 +28,7 @@ func Finish() {
 	fmt.Println("Expanding root partition...")
 	checkError(expandRootPartition())
 
-	fmt.Println("Configuring packages (this may take a few minutes)...")
+	fmt.Println("Configuring packages (this takes a few minutes)...")
 	checkError(configurePackages())
 
 	fmt.Println("Setting hostname...")
@@ -40,14 +40,17 @@ func Finish() {
 	fmt.Println("Self-removing from init...")
 	checkError(removeInit())
 
-	fmt.Println("Running setup script (/boot/setup)...")
-	util.AttachCommand("/bin/bash", "/boot/setup")
-	os.Remove("/boot/setup")
+	if _, err := os.Stat("/boot/setup"); !os.IsNotExist(err) {
+		fmt.Println("Running setup script (/boot/setup)...")
+		if err := util.AttachCommand("/bin/bash", "/boot/setup"); err != nil {
+			fmt.Println("Error : user-script /boot/setup didn't run successfully.")
+		}
+		os.Remove("/boot/setup")
+	}
 
 	fmt.Println("Installation succeeded! Rebooting in 5 seconds...")
-	time.Sleep(time.Second * 5)
-
 	syscall.Sync() // reboot(2) - LINUX_REBOOT_CMD_RESTART : If not preceded by a sync(2), data will be lost.
+	time.Sleep(time.Second * 5)
 	checkError(syscall.Reboot(syscall.LINUX_REBOOT_CMD_RESTART))
 }
 

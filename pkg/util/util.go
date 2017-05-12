@@ -3,6 +3,7 @@ package util
 import (
 	"os"
 	"os/exec"
+	"syscall"
 )
 
 func AttachCommand(name string, args ...string) error {
@@ -11,6 +12,28 @@ func AttachCommand(name string, args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
+}
+
+func Chroot(path string) (func() error, error) {
+	root, err := os.Open("/")
+	if err != nil {
+		return nil, err
+	}
+
+	if err := syscall.Chroot(path); err != nil {
+		root.Close()
+		return nil, err
+	}
+
+	return func() error {
+		if err := root.Chdir(); err != nil {
+			return err
+		}
+		if err := syscall.Chroot("."); err != nil {
+			return err
+		}
+		return root.Close()
+	}, nil
 }
 
 func Logo() string {
