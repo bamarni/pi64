@@ -1,10 +1,21 @@
-#!/usr/bin/env bash
+package main
 
+import (
+	"fmt"
+	"os"
+	"os/exec"
+	"strings"
+	"syscall"
+)
+
+func finishInstall() error {
+	script := exec.Command("bash", "-s", version, rootPart.Path())
+
+	script.Stdin = strings.NewReader(`
 set -ex
 
 version=${1:-lite}
-
-root_devmap=$(pi64-build -build-dir ./build -version $version)
+root_devmap=$2
 
 cd build
 
@@ -38,7 +49,7 @@ GOOS=linux GOARCH=arm64 go build -o ./root-$version/usr/bin/pi64-config github.c
 umount --lazy boot-$version root-$version
 
 min_root_size=$(resize2fs -P $root_devmap | sed 's/Estimated minimum size of the filesystem: //')
-e2fsck -f $root_devmap
+e2fsck -fy $root_devmap
 resize2fs $root_devmap $min_root_size
 last_sector=$(echo "$min_root_size * 8 + 137215" | bc)
 sync
@@ -57,6 +68,18 @@ w
 EOF
 
 truncate --size=$(echo "($last_sector + 1) * 512" |bc) pi64-$version.img
-sync
+`)
+	if out, err := script.CombinedOutput(); err != nil {
+		fmt.Println(string(out))
+		return err
+	}
 
-zip pi64-$version.zip pi64-$version.img
+	syscall.Sync()
+
+	if err := exec.Command("zip", buildDir+"/pi64-"+version+".zip", image.Path()).Run(); err != nil {
+		return err
+	}
+	return os.Remove(image.Path())
+
+	return nil
+}

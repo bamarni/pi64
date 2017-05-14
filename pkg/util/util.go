@@ -15,6 +15,11 @@ func AttachCommand(name string, args ...string) error {
 }
 
 func Chroot(path string) (func() error, error) {
+	cwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+
 	root, err := os.Open("/")
 	if err != nil {
 		return nil, err
@@ -26,13 +31,14 @@ func Chroot(path string) (func() error, error) {
 	}
 
 	return func() error {
+		defer root.Close()
 		if err := root.Chdir(); err != nil {
 			return err
 		}
 		if err := syscall.Chroot("."); err != nil {
 			return err
 		}
-		return root.Close()
+		return os.Chdir(cwd)
 	}, nil
 }
 

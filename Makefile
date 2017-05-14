@@ -3,10 +3,10 @@
 build: build/pi64-lite.zip build/pi64-desktop.zip
 
 build/pi64-lite.zip: build/linux build/userland build/firmware
-	bash make/image lite
+	pi64-build -build-dir ./build -version lite
 
 build/pi64-desktop.zip: build/linux build/userland build/firmware
-	bash make/image desktop
+	pi64-build -build-dir ./build -version desktop
 
 build/userland:
 	bash make/videocore
