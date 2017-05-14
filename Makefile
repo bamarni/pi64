@@ -1,4 +1,4 @@
-.PHONY: build release
+.PHONY: build validate release
 
 build: build/pi64-lite.zip build/pi64-desktop.zip
 
@@ -16,6 +16,9 @@ build/firmware:
 
 build/linux:
 	bash make/kernel
+
+validate:
+	bash make/validate
 
 release:
 	bash make/release

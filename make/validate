@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+
+set -ex
+
+ssh pi@raspberrypi.local "bash -s" << EOF
+     wget -qO ./goss https://github.com/bamarni/releases/raw/master/goss-arm64
+     chmod +x goss
+     wget -q https://raw.githubusercontent.com/bamarni/pi64/master/goss.yaml
+     sudo ./goss validate
+     rm goss goss.yaml
+EOF
