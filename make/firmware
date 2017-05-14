@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+set -ex
+
+cd build
+
+git clone --depth=1 https://github.com/raspberrypi/firmware
+
+cd firmware/boot
+
+rm -rf {*.dtb,*.img}
+
+echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait loglevel=3 net.ifnames=0 init=/usr/bin/pi64-config" > cmdline.txt
+
+echo "dtparam=audio=on" > config.txt

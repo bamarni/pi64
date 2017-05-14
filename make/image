@@ -16,11 +16,7 @@ mv root-$version/opt/vc/bin/* root-$version/usr/bin/
 
 # install kernel and boot stuff
 
-[ ! -d ./firmware ] && git clone --depth=1 https://github.com/raspberrypi/firmware
-
-cp -r firmware/boot/{bootcode.bin,fixup*.dat,start*.elf,overlays,LICENCE.broadcom} boot-$version
-echo "dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait loglevel=3 net.ifnames=0 init=/usr/bin/pi64-config" > boot-$version/cmdline.txt
-echo "dtparam=audio=on" > boot-$version/config.txt
+cp -r firmware/boot/* boot-$version
 
 cd linux
 cp arch/arm64/boot/Image ../boot-$version/kernel8.img
