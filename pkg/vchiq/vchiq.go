@@ -1,9 +1,9 @@
 package vchiq
 
 import (
+	"errors"
 	"os/exec"
 	"strconv"
-	"errors"
 )
 
 const (

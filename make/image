@@ -8,6 +8,8 @@ root_devmap=$(pi64-build -build-dir ./build -version $version)
 
 cd build
 
+rm -rf root-$version/var/lib/apt/lists/*
+
 # install videocore
 
 mkdir -p root-$version/opt

@@ -2,9 +2,10 @@ package dialog
 
 import (
 	"bytes"
-	"github.com/bamarni/pi64/pkg/util"
 	"os"
 	"os/exec"
+
+	"github.com/bamarni/pi64/pkg/util"
 )
 
 func Info(msg string) {
