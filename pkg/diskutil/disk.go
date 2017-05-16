@@ -3,7 +3,9 @@ package diskutil
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -24,8 +26,31 @@ type Disk struct {
 	partitions map[int]*Partition
 }
 
+func NewDisk(path string) (*Disk, error) {
+	device := filepath.Base(path)
+
+	rawSize, err := ioutil.ReadFile("/sys/block/" + device + "/size")
+	if err != nil {
+		return nil, err
+	}
+	size, err := strconv.ParseInt(string(rawSize[:len(rawSize)-1]), 10, 0)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO: find and add existing partitions
+	return &Disk{
+		path: path,
+		size: size,
+	}, nil
+}
+
 func (d *Disk) Path() string {
 	return d.path
+}
+
+func (d *Disk) Size() int64 {
+	return d.size
 }
 
 // Label creates a label for the partition table.
