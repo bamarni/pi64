@@ -22,6 +22,21 @@ Once logged in, you might want to run `sudo pi64-config` in order to get assiste
 
 ## FAQ
 
+### Can I still run 32-bit programs with pi64?
+
+You should be able to run 32-bit programs out of the box as long as they're statically linked. You can check this with the `file` command : 
+
+    $ file ./my-executable
+    ./my-executable: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, not stripped
+
+If your 32-bit program is shown as dynamically linked instead, you should still be able to run it by enabling [multiarch](https://wiki.debian.org/Multiarch/HOWTO) and installing program's required libraries :
+
+    sudo dpkg --add-architecture armhf
+    sudo apt-get update
+    sudo apt-get install libc6:armhf
+
+Here we're only installing the GNU C Library, but your program might need additional libraries.
+
 ### How can I remove SSH?
 
 For convenience, SSH is installed and enabled by default. This allows you to plug your Raspberry Pi to your home router and get started without the need
