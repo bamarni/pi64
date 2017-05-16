@@ -23,6 +23,12 @@ func CreateImage(path string, size int64) (*Image, error) {
 	if err := syscall.Fallocate(int(file.Fd()), 0, 0, size); err != nil {
 		return nil, err
 	}
+	if err := file.Sync(); err != nil {
+		return nil, err
+	}
+	if err := file.Close(); err != nil {
+		return nil, err
+	}
 
 	return &Image{
 		&Disk{
@@ -30,9 +36,10 @@ func CreateImage(path string, size int64) (*Image, error) {
 			size:       size,
 			partitions: make(map[int]*Partition),
 		},
-	}, file.Close()
+	}, nil
 }
 
+// MapPartitions creates device maps for image partitions.
 func (img *Image) MapPartitions() error {
 	kpartx := exec.Command("kpartx", "-avs", img.path)
 
@@ -62,6 +69,18 @@ func (img *Image) MapPartitions() error {
 	return kpartx.Wait()
 }
 
-func (img *Image) Shrink() {
+// UnmapPartitions removes device maps for image partitions.
+func (img *Image) UnmapPartitions() error {
+	if err := exec.Command("kpartx", "-d", img.path).Run(); err != nil {
+		return err
+	}
+	for _, p := range img.Disk.partitions {
+		p.path = ""
+	}
+	return nil
+}
 
+// Resize shrinks or extends an image file, size is in bytes.
+func (img *Image) Resize(size int64) (err error) {
+	return syscall.Truncate(img.path, size)
 }

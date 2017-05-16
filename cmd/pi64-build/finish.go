@@ -4,22 +4,23 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
+	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/bamarni/pi64/pkg/diskutil"
 )
 
 func finishInstall() error {
-	script := exec.Command("bash", "-s", version, rootPart.Path())
+	script := exec.Command("bash", "-sex", version, rootPart.Path())
+	script.Dir = buildDir
 
 	script.Stdin = strings.NewReader(`
-set -ex
-
-version=${1:-lite}
+version=$1
 root_devmap=$2
 
-cd build
-
-rm -rf root-$version/var/lib/apt/lists/*
+rm -rf root-$version/var/lib/apt/lists/* /etc/apt/sources.list.d/multistrap-debian
 
 # install videocore
 
@@ -43,43 +44,65 @@ wget -P root-$version/lib/firmware/brcm https://github.com/RPi-Distro/firmware-n
 
 # build pi64 cli tool
 GOOS=linux GOARCH=arm64 go build -o ./root-$version/usr/bin/pi64-config github.com/bamarni/pi64/cmd/pi64-config
-
-# shrink and compress image
-
-umount --lazy boot-$version root-$version
-
-min_root_size=$(resize2fs -P $root_devmap | sed 's/Estimated minimum size of the filesystem: //')
-e2fsck -fy $root_devmap
-resize2fs $root_devmap $min_root_size
-last_sector=$(echo "$min_root_size * 8 + 137215" | bc)
-sync
-
-kpartx -d ./pi64-$version.img
-
-fdisk ./pi64-$version.img <<EOF
-d
-2
-n
-p
-2
-137216
-$last_sector
-w
-EOF
-
-truncate --size=$(echo "($last_sector + 1) * 512" |bc) pi64-$version.img
 `)
 	if out, err := script.CombinedOutput(); err != nil {
-		fmt.Println(string(out))
+		fmt.Fprintln(os.Stderr, string(out))
+		return err
+	}
+
+	if err := bootPart.Unmount(syscall.MNT_DETACH); err != nil {
+		return err
+	}
+	if err := rootPart.Unmount(syscall.MNT_DETACH); err != nil {
+		return err
+	}
+
+	fmt.Fprintln(os.Stderr, "   Shrinking root filesystem...")
+	if err := runCommand("e2fsck", "-fy", rootPart.Path()); err != nil {
+		return err
+	}
+
+	out, err := exec.Command("resize2fs", "-P", rootPart.Path()).Output()
+	if err != nil {
+		return err
+	}
+	match := regexp.MustCompile(`Estimated minimum size of the filesystem: (\d+)`).FindStringSubmatch(string(out))
+	if match == nil {
+		return fmt.Errorf("couldn't parse resize2fs output : %s", out)
+	}
+	if err := rootPart.ResizeFs(match[1]); err != nil {
+		return err
+	}
+
+	fmt.Fprintln(os.Stderr, "   Removing image partition maps...")
+	if err := image.UnmapPartitions(); err != nil {
+		return err
+	}
+
+	fmt.Fprintln(os.Stderr, "   Recreating root partition...")
+	if err := image.DeletePartition(2); err != nil {
+		return err
+	}
+
+	minRootSize, _ := strconv.Atoi(match[1])
+	lastSector := minRootSize*8 + rootPart.Start() - 1
+
+	rootPart = diskutil.NewPartition(diskutil.LINUX, rootPart.Start(), lastSector)
+	if err := image.CreatePartition(2, rootPart); err != nil {
+		return err
+	}
+
+	fmt.Fprintln(os.Stderr, "   Truncating image...")
+	imgSize := int64((lastSector + 1) * 512)
+	if err := image.Resize(imgSize); err != nil {
 		return err
 	}
 
 	syscall.Sync()
 
-	if err := exec.Command("zip", buildDir+"/pi64-"+version+".zip", image.Path()).Run(); err != nil {
+	fmt.Fprintln(os.Stderr, "   Compressing image...")
+	if err := runCommand("zip", "-9", "-j", buildDir+"/pi64-"+version+".zip", image.Path()); err != nil {
 		return err
 	}
 	return os.Remove(image.Path())
-
-	return nil
 }

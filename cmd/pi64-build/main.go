@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"github.com/bamarni/pi64/pkg/diskutil"
@@ -59,6 +60,14 @@ func main() {
 
 	fmt.Fprintln(os.Stderr, "Finishing installation...")
 	checkError(finishInstall())
+}
+
+func runCommand(cmd string, args ...string) error {
+	out, err := exec.Command(cmd, args...).CombinedOutput()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, string(out))
+	}
+	return err
 }
 
 func checkError(err error) {

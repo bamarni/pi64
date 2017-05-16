@@ -20,10 +20,17 @@ func createImage() error {
 		return err
 	}
 
-	bootPart = diskutil.NewPartition(diskutil.W95_FAT32_LBA, 8192, 137215)
-	rootPart = diskutil.NewPartition(diskutil.LINUX, 137216, 0)
+	if err := image.Label(diskutil.DOS); err != nil {
+		return err
+	}
 
-	if err := image.Format(diskutil.DOS, []*diskutil.Partition{bootPart, rootPart}); err != nil {
+	bootPart = diskutil.NewPartition(diskutil.W95_FAT32_LBA, 8192, 137215)
+	if err := image.CreatePartition(1, bootPart); err != nil {
+		return err
+	}
+
+	rootPart = diskutil.NewPartition(diskutil.LINUX, bootPart.End()+1, 0)
+	if err := image.CreatePartition(2, rootPart); err != nil {
 		return err
 	}
 
