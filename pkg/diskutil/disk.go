@@ -3,9 +3,8 @@ package diskutil
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"os/exec"
-	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -27,13 +26,13 @@ type Disk struct {
 }
 
 func NewDisk(path string) (*Disk, error) {
-	device := filepath.Base(path)
-
-	rawSize, err := ioutil.ReadFile("/sys/block/" + device + "/size")
+	device, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
-	size, err := strconv.ParseInt(string(rawSize[:len(rawSize)-1]), 10, 0)
+	defer device.Close()
+
+	size, err := ioctl_BLKGETSIZE64(device.Fd())
 	if err != nil {
 		return nil, err
 	}

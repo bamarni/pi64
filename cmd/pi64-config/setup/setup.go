@@ -10,7 +10,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/bamarni/pi64/pkg/diskutil"
 	"github.com/bamarni/pi64/pkg/networking"
 	"github.com/bamarni/pi64/pkg/util"
 )
@@ -101,11 +100,8 @@ func mountFilesystems() error {
 }
 
 func expandRootPartition() error {
-	disk, err := diskutil.NewDisk("/dev/mmcblk0")
-	if err != nil {
-		return err
-	}
-	if err := runCommand("/sbin/parted", "/dev/mmcblk0", "u", "s", "resizepart", "2", fmt.Sprintf("%d", disk.Size()-1)); err != nil {
+	// parted: "-1s" specifies exactly the last sector.
+	if err := runCommand("/sbin/parted", "/dev/mmcblk0", "u", "s", "resizepart", "2", "-1s"); err != nil {
 		return err
 	}
 	return runCommand("/sbin/resize2fs", "/dev/mmcblk0p2")
