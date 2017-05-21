@@ -2,10 +2,13 @@
 
 set -ex
 
-ssh pi@raspberrypi.local "bash -s" << EOF
+scp goss.yaml pi@raspberrypi.local:~
+
+ssh pi@raspberrypi.local "bash -ex" << EOF
      wget -qO ./goss https://github.com/bamarni/releases/raw/master/goss-arm64
      chmod +x goss
-     wget -q https://raw.githubusercontent.com/bamarni/pi64/master/goss.yaml
      sudo ./goss validate
      rm goss goss.yaml
+     sudo modprobe configs
+     zgrep BCM_VCIO=y /proc/config.gz
 EOF
