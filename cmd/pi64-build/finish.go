@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/bamarni/pi64/pkg/diskutil"
 )
@@ -75,6 +76,9 @@ GOOS=linux GOARCH=arm64 go build -o ./root-$version/usr/bin/pi64-config github.c
 	}
 
 	fmt.Fprintln(os.Stderr, "   Removing image partition maps...")
+	// occasionnaly getting "device-mapper: remove ioctl on loopXp2 failed: Device or resource busy"
+	// not sure why yet, sleep a bit as a workaround for now
+	time.Sleep(1 * time.Second)
 	if err := image.UnmapPartitions(); err != nil {
 		return err
 	}
