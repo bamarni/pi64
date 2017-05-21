@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"os/signal"
+	"os/user"
+	"strings"
 	"syscall"
 	"time"
 
@@ -33,8 +35,10 @@ func Finish() {
 	fmt.Println("Setting hostname...")
 	checkError(networking.SetHostname("raspberrypi"))
 
-	fmt.Println("Adding pi user...")
-	checkError(addPiUser())
+	if _, err := user.Lookup("pi"); err != nil {
+		fmt.Println("Adding pi user...")
+		checkError(addPiUser())
+	}
 
 	fmt.Println("Self-removing from init...")
 	checkError(removeInit())
@@ -100,9 +104,13 @@ func mountFilesystems() error {
 }
 
 func expandRootPartition() error {
+	parted := exec.Command("/sbin/parted", "/dev/mmcblk0")
+
 	// parted: "-1s" specifies exactly the last sector.
-	if err := runCommand("/sbin/parted", "/dev/mmcblk0", "u", "s", "resizepart", "2", "-1s"); err != nil {
-		return err
+	parted.Stdin = strings.NewReader("resizepart 2 -1s\n")
+
+	if out, err := parted.CombinedOutput(); err != nil {
+		return fmt.Errorf("couldn't expand root partition : %s\n\n%s", err, out)
 	}
 	return runCommand("/sbin/resize2fs", "/dev/mmcblk0p2")
 }
