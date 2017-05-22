@@ -23,22 +23,13 @@ var (
 	rootDir  string
 	bootDir  string
 	version  string
-	packages = []string{
-		// Base packages
-		"apt", "systemd", "systemd-sysv", "udev", "kmod", "locales", "sudo",
-
-		// Networking packages
-		"netbase", "net-tools", "ethtool", "iproute", "iputils-ping", "ifupdown", "dhcpcd5", "firmware-brcm80211", "wpasupplicant", "ssh", "avahi-daemon", "ntp",
-
-		// Packages required by the pi64-config CLI tool
-		"dialog", "sysbench", "wireless-tools", "parted",
-	}
-	desktopPackages = []string{"task-lxde-desktop"}
+	debug    bool
 )
 
 func main() {
 	flag.StringVar(&buildDir, "build-dir", "", "Build directory")
 	flag.StringVar(&version, "version", Lite, "pi64 version ('lite' or 'desktop')")
+	flag.BoolVar(&debug, "debug", false, "Create a debug image")
 	flag.Parse()
 
 	if version != Lite && version != Desktop {

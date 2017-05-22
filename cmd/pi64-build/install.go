@@ -11,6 +11,21 @@ import (
 	"github.com/bamarni/pi64/pkg/util"
 )
 
+var (
+	packages = []string{
+		// Base packages
+		"apt", "systemd", "systemd-sysv", "udev", "kmod", "locales", "sudo",
+
+		// Networking packages
+		"netbase", "net-tools", "ethtool", "iproute", "iputils-ping", "ifupdown", "dhcpcd5", "firmware-brcm80211", "wpasupplicant", "ssh", "avahi-daemon", "ntp",
+
+		// Packages required by the pi64-config CLI tool
+		"dialog", "sysbench", "wireless-tools", "parted",
+	}
+	desktopPackages = []string{"task-lxde-desktop"}
+	debugPackages   = []string{"device-tree-compiler", "strace", "vim", "less"}
+)
+
 func installDebian() error {
 	fmt.Fprintln(os.Stderr, "   Running multistrap...")
 	multistrap := exec.Command("multistrap", "-a", "arm64", "-d", rootDir, "-f", "/dev/stdin")
@@ -18,6 +33,9 @@ func installDebian() error {
 	packages := packages
 	if version == Desktop {
 		packages = append(packages, desktopPackages...)
+	}
+	if debug {
+		packages = append(packages, debugPackages...)
 	}
 	multistrap.Stdin = strings.NewReader(`
 [General]

@@ -71,7 +71,7 @@ func (img *Image) MapPartitions() error {
 
 // UnmapPartitions removes device maps for image partitions.
 func (img *Image) UnmapPartitions() error {
-	out, err := exec.Command("kpartx", "-d", img.path).CombinedOutput()
+	out, err := exec.Command("kpartx", "-dv", img.path).CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("couldn't unmap partitions : %s\n\n%s", err, out)
 	}

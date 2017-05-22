@@ -2,7 +2,21 @@ FROM ubuntu:17.04
 
 RUN apt-get update \
     && apt-get -y install \
-        bc build-essential cmake gcc-aarch64-linux-gnu g++-aarch64-linux-gnu git unzip qemu-user-static multistrap zip wget dosfstools kpartx golang-1.8-go \
+        bc \
+        build-essential \
+        cmake \
+        device-tree-compiler \
+        gcc-aarch64-linux-gnu \
+        g++-aarch64-linux-gnu \
+        git \
+        unzip \
+        qemu-user-static \
+        multistrap \
+        zip \
+        wget \
+        dosfstools \
+        kpartx \
+        golang-1.8-go \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"regexp"
@@ -51,6 +52,31 @@ GOOS=linux GOARCH=arm64 go build -o ./root-$version/usr/bin/pi64-config github.c
 		return err
 	}
 
+	fmt.Fprintln(os.Stderr, "   Creating /boot/cmdline.txt...")
+	logLevel := 3
+	if debug {
+		logLevel = 7
+	}
+	cmdLine := fmt.Sprintf("dwc_otg.lpm_enable=0 console=serial0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline fsck.repair=yes rootwait loglevel=%d net.ifnames=0 init=/usr/bin/pi64-config", logLevel)
+	if err := ioutil.WriteFile(bootDir+"/cmdline.txt", []byte(cmdLine), 0644); err != nil {
+		return err
+	}
+
+	fmt.Fprintln(os.Stderr, "   Generating /boot/bcm2710-rpi-3-b.dts...")
+	dtsFile, err := os.Create(bootDir + "/bcm2710-rpi-3-b.dts")
+	if err != nil {
+		return err
+	}
+	dts := exec.Command("dtc", "-I", "dtb", "-O", "dts", bootDir+"/bcm2710-rpi-3-b.dtb")
+	dts.Stdout = dtsFile
+	if err := dts.Run(); err != nil {
+		return err
+	}
+	if err := dtsFile.Close(); err != nil {
+		return err
+	}
+
+	fmt.Fprintln(os.Stderr, "   Unmounting filesystems...")
 	if err := bootPart.Unmount(syscall.MNT_DETACH); err != nil {
 		return err
 	}
@@ -83,7 +109,7 @@ GOOS=linux GOARCH=arm64 go build -o ./root-$version/usr/bin/pi64-config github.c
 		return err
 	}
 
-	fmt.Fprintln(os.Stderr, "   Recreating root partition...")
+	fmt.Fprintln(os.Stderr, "   Shrinking root partition...")
 	if err := image.DeletePartition(2); err != nil {
 		return err
 	}

@@ -8,10 +8,6 @@ import (
 	"unsafe"
 )
 
-const (
-	BLKGETSIZE64 = C.BLKGETSIZE64
-)
-
 func ioctl_BLKGETSIZE64(fd uintptr) (int64, error) {
 	var size int64
 	if _, _, err := syscall.Syscall(syscall.SYS_IOCTL, fd, C.BLKGETSIZE64, uintptr(unsafe.Pointer(&size))); err != 0 {
