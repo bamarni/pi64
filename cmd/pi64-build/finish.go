@@ -22,7 +22,7 @@ func finishInstall() error {
 version=$1
 root_devmap=$2
 
-rm -rf root-$version/var/lib/apt/lists/* /etc/apt/sources.list.d/multistrap-debian
+rm -rf root-$version/var/lib/apt/lists/* /etc/apt/sources.list.d/*
 
 # install videocore
 
