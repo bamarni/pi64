@@ -3,11 +3,19 @@ package networking
 import (
 	"bufio"
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os/exec"
 	"regexp"
+	"strconv"
 	"strings"
 )
+
+// Access Point
+type AP struct {
+	Name    string
+	Quality int
+}
 
 func SetHostname(hostname string) error {
 	if err := ioutil.WriteFile("/etc/hostname", []byte(hostname+"\n"), 0644); err != nil {
@@ -37,24 +45,34 @@ func Ifdown(iface string) error {
 	return exec.Command("ifdown", iface).Run()
 }
 
-func ScanSSIDs(iface string) ([]string, error) {
+// ScanAPs searches for available access points through a given wireless interface
+func ScanAPs(iface string) ([]*AP, error) {
 	var out bytes.Buffer
 	cmd := exec.Command("iwlist", iface, "scan")
 	cmd.Stdout = &out
 	if err := cmd.Run(); err != nil {
 		return nil, err
 	}
-
-	var ssids []string
 	scanner := bufio.NewScanner(&out)
+
+	var ap *AP
+	var aps []*AP
 	for scanner.Scan() {
 		line := strings.TrimLeft(scanner.Text(), " ")
-		if !strings.HasPrefix(line, "ESSID") {
-			continue
-		}
-		if splits := strings.Split(line, `"`); len(splits) == 3 {
-			ssids = append(ssids, splits[1])
+		if strings.HasPrefix(line, "Cell") {
+			if ap != nil {
+				aps = append(aps, ap)
+			}
+			ap = &AP{}
+		} else if strings.HasPrefix(line, "ESSID") {
+			if splits := strings.Split(line, `"`); len(splits) == 3 {
+				ap.Name = splits[1]
+			}
+		} else if strings.HasPrefix(line, "Quality") {
+			ap.Quality, _ = strconv.Atoi(line[8:10])
+			fmt.Println(line[8:10])
 		}
 	}
-	return ssids, nil
+	aps = append(aps, ap)
+	return aps, nil
 }

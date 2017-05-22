@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"os"
 	"os/exec"
+	"sort"
 	"strconv"
 
 	"github.com/bamarni/pi64/pkg/dialog"
@@ -12,14 +13,18 @@ import (
 )
 
 func configureWifi() {
-	ssids, err := networking.ScanSSIDs("wlan0")
+	ssids, err := networking.ScanAPs("wlan0")
 	if err != nil || len(ssids) == 0 {
 		dialog.Message("Couldn't scan for SSIDs.")
 		return
 	}
+
+	// sort access points by signal quality
+	sort.Slice(ssids, func(i, j int) bool { return ssids[i].Quality > ssids[j].Quality })
+
 	args := []string{"0"}
 	for i, ssid := range ssids {
-		args = append(args, strconv.Itoa(i), ssid)
+		args = append(args, strconv.Itoa(i), ssid.Name)
 	}
 	res, err := strconv.Atoi(dialog.Prompt("menu", "Available Wi-Fi SSIDs", args...))
 	if err != nil {
@@ -28,7 +33,7 @@ func configureWifi() {
 	}
 	ssid := ssids[res]
 
-	passphrase := dialog.Prompt("passwordbox", "Passphrase for "+ssid)
+	passphrase := dialog.Prompt("passwordbox", "Passphrase for "+ssid.Name)
 	if err != nil {
 		dialog.Message("Passphrase not provided, aborting.")
 		return
@@ -44,7 +49,7 @@ func configureWifi() {
 	config := bufio.NewWriter(configFile)
 	config.Write([]byte("ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\nupdate_config=1\n"))
 
-	cmd := exec.Command("/usr/bin/wpa_passphrase", ssid, passphrase)
+	cmd := exec.Command("/usr/bin/wpa_passphrase", ssid.Name, passphrase)
 	cmd.Stdout = config
 	if err := cmd.Run(); err != nil {
 		dialog.Message("Couldn't generate passphrase.")
