@@ -17,9 +17,6 @@ import (
 )
 
 func Finish() {
-	time.Sleep(time.Second * 3)
-	util.AttachCommand("/usr/bin/clear")
-
 	fmt.Println(util.Logo() + "\n\n")
 	setEnv()
 

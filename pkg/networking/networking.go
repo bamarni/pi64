@@ -3,7 +3,6 @@ package networking
 import (
 	"bufio"
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"os/exec"
 	"regexp"
@@ -70,7 +69,6 @@ func ScanAPs(iface string) ([]*AP, error) {
 			}
 		} else if strings.HasPrefix(line, "Quality") {
 			ap.Quality, _ = strconv.Atoi(line[8:10])
-			fmt.Println(line[8:10])
 		}
 	}
 	aps = append(aps, ap)

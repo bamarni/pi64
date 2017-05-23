@@ -24,6 +24,14 @@ file:
     exists: true
   /etc/apt/sources.list.d/multistrap-debian.list:
     exists: false
+  /sys/class/leds/led0/trigger:
+    exists: true
+    contains:
+      - "[mmc0]"
+  /sys/class/leds/led1/trigger:
+    exists: true
+    contains:
+      - "[input]"
   /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor:
     exists: true
     contains:
