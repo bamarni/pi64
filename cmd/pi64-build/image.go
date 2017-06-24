@@ -45,11 +45,12 @@ func createImage() error {
 		return err
 	}
 
-	bootDir, rootDir = buildDir+"/boot-"+version, buildDir+"/root-"+version
+	rootDir = buildDir + "/root-" + version
+	bootDir = rootDir + "/boot"
 
 	fmt.Fprintln(os.Stderr, "   Mounting filesystems...")
-	if err := bootPart.Mount(bootDir, 0, ""); err != nil {
+	if err := rootPart.Mount(rootDir, 0, ""); err != nil {
 		return err
 	}
-	return rootPart.Mount(rootDir, 0, "")
+	return bootPart.Mount(bootDir, 0, "")
 }

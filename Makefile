@@ -14,8 +14,11 @@ build/userland:
 build/firmware:
 	bash make/firmware
 
-build/linux:
-	bash make/kernel
+build/linux: build/linux-src
+	bash make/linux
+
+build/linux-src:
+	bash make/linux-src
 
 validate:
 	bash make/validate

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -ex
+
+mkdir -p build && cd build
+
+git clone --depth=1 -b rpi-4.11.y https://github.com/raspberrypi/linux.git linux-src
+
+cd linux-src
+
+cp ../../make/kernel-config.txt ./.config
+
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
+
+make -j $(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+
+cp arch/arm64/boot/Image ../boot-$version/kernel8.img
+cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../boot-$version/
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=$(dirname $PWD)/root-$version modules_install
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_HDR_PATH=$(dirname $PWD)/root-$version/usr headers_install
+cd ..

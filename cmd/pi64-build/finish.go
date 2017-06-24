@@ -32,13 +32,9 @@ mv root-$version/opt/vc/bin/* root-$version/usr/bin/
 
 # install kernel and boot stuff
 
-cp -r firmware/boot/* boot-$version
+cp -r firmware/boot/* root-$version/boot
 
-cd linux
-cp arch/arm64/boot/Image ../boot-$version/kernel8.img
-cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../boot-$version/
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=$(dirname $PWD)/root-$version modules_install
-cd ..
+rsync -a linux/ root-$version/
 
 # https://github.com/RPi-Distro/repo/issues/51
 mkdir -p root-$version/lib/firmware/brcm
