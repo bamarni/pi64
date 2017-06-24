@@ -58,18 +58,20 @@ GOOS=linux GOARCH=arm64 go build -o ./root-$version/usr/bin/pi64-config github.c
 		return err
 	}
 
-	fmt.Fprintln(os.Stderr, "   Generating /boot/bcm2710-rpi-3-b.dts...")
-	dtsFile, err := os.Create(bootDir + "/bcm2710-rpi-3-b.dts")
-	if err != nil {
-		return err
-	}
-	dts := exec.Command("dtc", "-I", "dtb", "-O", "dts", bootDir+"/bcm2710-rpi-3-b.dtb")
-	dts.Stdout = dtsFile
-	if err := dts.Run(); err != nil {
-		return err
-	}
-	if err := dtsFile.Close(); err != nil {
-		return err
+	if debug {
+		fmt.Fprintln(os.Stderr, "   Generating /boot/bcm2710-rpi-3-b.dts...")
+		dtsFile, err := os.Create(bootDir + "/bcm2710-rpi-3-b.dts")
+		if err != nil {
+			return err
+		}
+		dts := exec.Command("dtc", "-I", "dtb", "-O", "dts", bootDir+"/bcm2710-rpi-3-b.dtb")
+		dts.Stdout = dtsFile
+		if err := dts.Run(); err != nil {
+			return err
+		}
+		if err := dtsFile.Close(); err != nil {
+			return err
+		}
 	}
 
 	fmt.Fprintln(os.Stderr, "   Unmounting filesystems...")
