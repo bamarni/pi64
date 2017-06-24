@@ -40,8 +40,9 @@ rsync -a linux/ root-$version/
 mkdir -p root-$version/lib/firmware/brcm
 wget -P root-$version/lib/firmware/brcm https://github.com/RPi-Distro/firmware-nonfree/raw/master/brcm80211/brcm/brcmfmac43430-sdio.txt
 
-# build pi64 cli tool
+# build pi64 cli tools
 GOOS=linux GOARCH=arm64 go build -o ./root-$version/usr/bin/pi64-config github.com/bamarni/pi64/cmd/pi64-config
+GOOS=linux GOARCH=arm64 go build -o ./root-$version/usr/bin/pi64-update github.com/bamarni/pi64/cmd/pi64-update
 `)
 	if out, err := script.CombinedOutput(); err != nil {
 		fmt.Fprintln(os.Stderr, string(out))
