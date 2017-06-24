@@ -6,8 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
-	"strings"
 
+	"github.com/bamarni/pi64/pkg/multistrap"
 	"github.com/bamarni/pi64/pkg/util"
 )
 
@@ -17,42 +17,36 @@ var (
 		"apt", "systemd", "systemd-sysv", "udev", "kmod", "locales", "sudo",
 
 		// Networking packages
-		"netbase", "net-tools", "ethtool", "iproute", "iputils-ping", "ifupdown", "dhcpcd5", "firmware-brcm80211", "wpasupplicant", "ssh", "avahi-daemon", "ntp",
+		"netbase", "net-tools", "ethtool", "iproute", "iputils-ping", "ifupdown", "dhcpcd5", "firmware-brcm80211", "wpasupplicant", "ntp",
 
 		// Packages required by the pi64-config CLI tool
 		"dialog", "sysbench", "wireless-tools", "parted",
 	}
+	litePackages    = []string{"ssh", "avahi-daemon"}
 	desktopPackages = []string{"task-lxde-desktop"}
 	debugPackages   = []string{"device-tree-compiler", "strace", "vim", "less"}
 )
 
 func installDebian() error {
 	fmt.Fprintln(os.Stderr, "   Running multistrap...")
-	multistrap := exec.Command("multistrap", "-a", "arm64", "-d", rootDir, "-f", "/dev/stdin")
 
 	packages := packages
-	if version == Desktop {
+	if version == Lite {
+		packages = append(packages, litePackages...)
+	} else if version == Desktop {
 		packages = append(packages, desktopPackages...)
 	}
 	if debug {
 		packages = append(packages, debugPackages...)
 	}
-	multistrap.Stdin = strings.NewReader(`
-[General]
-noauth=true
-unpack=true
-allowrecommends=true
-debootstrap=Debian
-aptsources=Debian
-
-[Debian]
-source=http://deb.debian.org/debian/
-keyring=debian-archive-keyring
-components=main non-free
-suite=stretch
-packages=` + strings.Join(packages, " "))
-
-	if err := multistrap.Run(); err != nil {
+	multistrapOpts := multistrap.Options{
+		Directory:  rootDir,
+		Arch:       "arm64",
+		Suite:      "stretch",
+		Components: []string{"main", "contrib", "non-free"},
+		Packages:   packages,
+	}
+	if err := multistrap.Run(multistrapOpts); err != nil {
 		return err
 	}
 

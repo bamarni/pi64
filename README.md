@@ -16,9 +16,11 @@ During first boot the installation process will continue for a few minutes, then
 
 ## Getting started
 
-The default user is `pi` and its password `raspberry`, it has passwordless root privileges escalation through `sudo`. SSH is also enabled by default.
+The default user is `pi` and its password `raspberry`, it has passwordless root privileges escalation through `sudo`.
 
 Once logged in, you might want to run `sudo pi64-config` in order to get assisted with your setup!
+
+On the lite version, SSH is enabled by default.
 
 ## FAQ
 
@@ -39,7 +41,7 @@ Here we're only installing the GNU C Library, but your program might need additi
 
 ### How can I remove SSH?
 
-For convenience, SSH is installed and enabled by default. This allows you to plug your Raspberry Pi to your home router and get started without the need
+On the lite version and for convenience, SSH is installed and enabled by default. This allows you to plug your Raspberry Pi to your home router and get started without the need
 of an extra monitor / keyboard. If you want to remove it, just run :
 
     sudo apt-get autoremove --purge -y ssh avahi-daemon
