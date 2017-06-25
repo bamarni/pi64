@@ -1,6 +1,6 @@
-.PHONY: build validate release
+.PHONY: all validate release
 
-build: build/pi64-lite.zip build/pi64-desktop.zip
+all: build/pi64-lite.zip build/pi64-desktop.zip
 
 build/pi64-lite.zip: build/linux build/userland build/firmware
 	pi64-build -build-dir ./build -version lite
@@ -14,8 +14,15 @@ build/userland:
 build/firmware:
 	bash make/firmware
 
+build/linux.tar.gz.sig: build/linux.tar.gz
+	cd build && gpg2 --output linux.tar.gz.sig --detach-sign linux.tar.gz
+
+build/linux.tar.gz: build/linux
+	cd build/linux && tar -zcvf ../linux.tar.gz .
+
 build/linux: build/linux-src
 	bash make/linux
+	touch build/linux # otherwise make will rebuild that target everytime (as build/linux-src gets altered by make/linux)
 
 build/linux-src:
 	bash make/linux-src

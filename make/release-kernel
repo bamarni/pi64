@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+set -ex
+
+cd build
+
+[ ! -d ./pi64-kernel ] && git clone https://github.com/bamarni/pi64-kernel
+
+cd pi64-kernel
+
+release=$(date +"%Y-%m-%d")
+
+git tag $release
+git push origin $release
+
+cd ..
+
+
+github-release release --user bamarni --repo pi64-kernel --tag $release --draft
+
+github-release upload --user bamarni --repo pi64-kernel --tag $release --name "linux.tar.gz" --file "linux.tar.gz"
+github-release upload --user bamarni --repo pi64-kernel --tag $release --name "linux.tar.gz.sig" --file "linux.tar.gz.sig"

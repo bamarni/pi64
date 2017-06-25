@@ -71,6 +71,11 @@ wzpJTwI20V/YdjUzKlj9+KhpameHVMgs61fVZ4J4BKk/s8lShToS0EYW7HP6v1Uv
 )
 
 func main() {
+	if os.Geteuid() != 0 {
+		fmt.Fprintln(os.Stderr, "pi64-update must be run as root")
+		os.Exit(1)
+	}
+
 	keyring, err := openpgp.ReadArmoredKeyRing(strings.NewReader(pubKey))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't read keyring : "+err.Error())
@@ -82,19 +87,21 @@ func main() {
 		return http.ErrUseLastResponse
 	}
 
-	latestReleaseResp, err := client.Get("https://github.com/bamarni/pi64/releases/latest")
+	latestReleaseResp, err := client.Get("https://github.com/bamarni/pi64-kernel/releases/latest")
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Couldn't request for latest release.")
+		fmt.Fprintln(os.Stderr, "Couldn't request for latest release : "+err.Error())
 		os.Exit(1)
 	}
 
 	latestRelease, err := latestReleaseResp.Location()
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Couldn't parse latest release location.")
+		fmt.Fprintln(os.Stderr, "Couldn't parse latest release location : "+err.Error())
 		os.Exit(1)
 	}
 
-	releaseEndpoint := "https://github.com/bamarni/pi64/releases/download/" + path.Base(latestRelease.String())
+	releaseEndpoint := "https://github.com/bamarni/pi64-kernel/releases/download/" + path.Base(latestRelease.String())
+
+	fmt.Fprintf(os.Stderr, "Downloading '%s' release.\n", latestRelease)
 
 	tarResp, err := http.Get(releaseEndpoint + "/linux.tar.gz")
 	if err != nil {
@@ -105,7 +112,7 @@ func main() {
 
 	tarFile, err := os.Create(tarPath)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "Couldn't create "+tarPath+" : "+err.Error())
+		fmt.Fprintf(os.Stderr, "Couldn't create %s : %s\n", tarPath, err)
 		os.Exit(1)
 	}
 	defer tarFile.Close()
@@ -128,4 +135,6 @@ func main() {
 		fmt.Fprintln(os.Stderr, "Couldn't extract "+tarPath+" : "+err.Error())
 		os.Exit(1)
 	}
+
+	fmt.Fprintln(os.Stderr, "Your kernel has been updated! You'll have to reboot for this to take effect.")
 }

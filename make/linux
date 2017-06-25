@@ -2,7 +2,6 @@
 
 set -ex
 
-
 cd build/linux-src
 
 mkdir -p ../linux/boot ../linux/usr

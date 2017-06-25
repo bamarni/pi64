@@ -21,6 +21,9 @@ var (
 
 		// Packages required by the pi64-config CLI tool
 		"dialog", "sysbench", "wireless-tools", "parted",
+
+		// Packages required by the pi64-update CLI tool
+		"ca-certificates",
 	}
 	litePackages    = []string{"ssh", "avahi-daemon"}
 	desktopPackages = []string{"task-lxde-desktop"}
