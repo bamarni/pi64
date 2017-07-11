@@ -45,22 +45,6 @@ wget -P root-$version/lib/firmware/brcm https://github.com/RPi-Distro/firmware-n
 		return err
 	}
 
-	if debug {
-		fmt.Fprintln(os.Stderr, "   Generating /boot/bcm2710-rpi-3-b.dts...")
-		dtsFile, err := os.Create(bootDir + "/bcm2710-rpi-3-b.dts")
-		if err != nil {
-			return err
-		}
-		dts := exec.Command("dtc", "-I", "dtb", "-O", "dts", bootDir+"/bcm2710-rpi-3-b.dtb")
-		dts.Stdout = dtsFile
-		if err := dts.Run(); err != nil {
-			return err
-		}
-		if err := dtsFile.Close(); err != nil {
-			return err
-		}
-	}
-
 	fmt.Fprintln(os.Stderr, "   Unmounting filesystems...")
 	if err := bootPart.Unmount(syscall.MNT_DETACH); err != nil {
 		return err
