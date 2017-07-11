@@ -87,6 +87,11 @@ deb-src http://security.debian.org/ stretch/updates main contrib non-free
 		return err
 	}
 
+	// cf. https://github.com/bamarni/pi64/issues/8
+	if err := exec.Command("dpkg", "--list").Run(); err != nil {
+		return err
+	}
+
 	fmt.Fprintln(os.Stderr, "   Configuring filesystems in /etc/fstab...")
 	fstab := []byte(`
 proc            /proc           proc    defaults          0       0
