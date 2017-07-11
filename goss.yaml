@@ -17,6 +17,18 @@ mount:
     exists: true
     filesystem: sysfs
 
+command:
+  zcat /proc/config.gz:
+    exit-status: 0
+    stdout:
+      - CONFIG_COMPAT=y
+      - CONFIG_KEYS_COMPAT=y
+      - CONFIG_CPU_FREQ_DEFAULT_GOV_ONDEMAND=y
+      - CONFIG_BCM_VCIO=y
+      - CONFIG_DEVPTS_MULTIPLE_INSTANCES=y
+      - CONFIG_GPIO_BCM_EXP=y
+      - CONFIG_VIDEO_BCM2835=m
+
 file:
   /dev/vchiq:
     exists: true
@@ -24,6 +36,10 @@ file:
     exists: true
   /etc/apt/sources.list.d/multistrap-debian.list:
     exists: false
+  /usr/bin/pi64-config:
+    exists: true
+  /usr/bin/pi64-update:
+    exists: true
   /sys/class/leds/led0/trigger:
     exists: true
     contains:
