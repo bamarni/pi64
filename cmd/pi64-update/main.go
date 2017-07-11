@@ -5,10 +5,10 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"os/exec"
 	"path"
 	"strings"
 
+	"github.com/bamarni/pi64/pkg/pi64"
 	"golang.org/x/crypto/openpgp"
 )
 
@@ -71,15 +71,19 @@ wzpJTwI20V/YdjUzKlj9+KhpameHVMgs61fVZ4J4BKk/s8lShToS0EYW7HP6v1Uv
 )
 
 func main() {
+	os.Exit(run())
+}
+
+func run() int {
 	if os.Geteuid() != 0 {
 		fmt.Fprintln(os.Stderr, "pi64-update must be run as root")
-		os.Exit(1)
+		return 1
 	}
 
 	keyring, err := openpgp.ReadArmoredKeyRing(strings.NewReader(pubKey))
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't read keyring : "+err.Error())
-		os.Exit(1)
+		return 1
 	}
 
 	client := new(http.Client)
@@ -90,13 +94,31 @@ func main() {
 	latestReleaseResp, err := client.Get("https://github.com/bamarni/pi64-kernel/releases/latest")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't request for latest release : "+err.Error())
-		os.Exit(1)
+		return 1
 	}
 
 	latestRelease, err := latestReleaseResp.Location()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't parse latest release location : "+err.Error())
-		os.Exit(1)
+		return 1
+	}
+
+	metadata, err := pi64.ReadMetadata()
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "Couldn't read pi64 metadata.")
+		return 1
+	}
+
+	currentVersion := metadata.KernelVersion
+	if currentVersion == "" {
+		currentVersion = metadata.Version
+	}
+
+	latestVersion := path.Base(latestRelease.String())
+
+	if latestVersion <= currentVersion {
+		fmt.Fprintln(os.Stderr, "You're already using the latest version.")
+		return 0
 	}
 
 	releaseEndpoint := "https://github.com/bamarni/pi64-kernel/releases/download/" + path.Base(latestRelease.String())
@@ -106,14 +128,14 @@ func main() {
 	tarResp, err := http.Get(releaseEndpoint + "/linux.tar.gz")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't get linux.tar.gz : "+err.Error())
-		os.Exit(1)
+		return 1
 	}
 	defer tarResp.Body.Close()
 
 	tarFile, err := os.Create(tarPath)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Couldn't create %s : %s\n", tarPath, err)
-		os.Exit(1)
+		return 1
 	}
 	defer tarFile.Close()
 	defer os.Remove(tarPath)
@@ -121,20 +143,21 @@ func main() {
 	sig, err := http.Get(releaseEndpoint + "/linux.tar.gz.sig")
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't get linux.tar.gz.sig : "+err.Error())
-		os.Exit(1)
+		return 1
 	}
 	defer sig.Body.Close()
 
 	_, err = openpgp.CheckDetachedSignature(keyring, io.TeeReader(tarResp.Body, tarFile), sig.Body)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't verify signature : "+err.Error())
-		os.Exit(1)
+		return 1
 	}
 
 	if err := exec.Command("tar", "-zxvf", tarPath, "-C", "/").Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't extract "+tarPath+" : "+err.Error())
-		os.Exit(1)
+		return 1
 	}
 
 	fmt.Fprintln(os.Stderr, "Your kernel has been updated! You'll have to reboot for this to take effect.")
+	return 0
 }
