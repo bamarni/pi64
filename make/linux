@@ -18,6 +18,6 @@ GOOS=linux GOARCH=arm64 go build -o ./linux/usr/bin/pi64-update github.com/bamar
 GOOS=linux GOARCH=arm64 go build -o ./linux/usr/bin/pi64-config github.com/bamarni/pi64/cmd/pi64-config
 
 cp -R /opt/vc linux/opt/
-mv linux/opt/bin/* linux/usr/bin/
+mv linux/opt/vc/bin/* linux/usr/bin/
 
 cp -R firmware/boot/* linux/boot

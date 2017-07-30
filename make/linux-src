@@ -13,9 +13,3 @@ cp ../../make/kernel-config.txt ./.config
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- olddefconfig
 
 make -j $(nproc) ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
-
-cp arch/arm64/boot/Image ../boot-$version/kernel8.img
-cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../boot-$version/
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=$(dirname $PWD)/root-$version modules_install
-make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_HDR_PATH=$(dirname $PWD)/root-$version/usr headers_install
-cd ..
