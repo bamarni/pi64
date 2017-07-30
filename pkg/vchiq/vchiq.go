@@ -17,7 +17,7 @@ const (
 )
 
 func GetThrottled() (int64, error) {
-	rawThrottled, err := exec.Command("/opt/vc/bin/vcgencmd", "get_throttled").Output()
+	rawThrottled, err := exec.Command("vcgencmd", "get_throttled").Output()
 	len := len(rawThrottled)
 	if err != nil || len < 14 {
 		return 0, errors.New("couldn't run vcgencmd")
