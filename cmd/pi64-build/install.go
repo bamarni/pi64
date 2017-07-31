@@ -6,8 +6,10 @@ import (
 	"io/ioutil"
 	"os"
 	"os/exec"
+	"time"
 
 	"github.com/bamarni/pi64/pkg/multistrap"
+	"github.com/bamarni/pi64/pkg/pi64"
 	"github.com/bamarni/pi64/pkg/util"
 )
 
@@ -128,6 +130,14 @@ iface wlan0 inet manual
 	fmt.Fprintln(os.Stderr, "   Configuring wpa_supplicant...")
 	wpaSup := []byte("ctrl_interface=DIR=/var/run/wpa_supplicant GROUP=netdev\nupdate_config=1\n")
 	if err := ioutil.WriteFile("/etc/wpa_supplicant/wpa_supplicant.conf", wpaSup, 0600); err != nil {
+		return err
+	}
+
+	fmt.Fprintln(os.Stderr, "   Writing metadata...")
+	metadata := pi64.Metadata{
+		Version: time.Now().Format("2006-01-02"),
+	}
+	if err := pi64.WriteMetadata(metadata); err != nil {
 		return err
 	}
 

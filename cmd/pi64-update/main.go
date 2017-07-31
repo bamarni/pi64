@@ -122,7 +122,7 @@ func run() int {
 		return 0
 	}
 
-	releaseEndpoint := "https://github.com/bamarni/pi64-kernel/releases/download/" + path.Base(latestRelease.String())
+	releaseEndpoint := "https://github.com/bamarni/pi64-kernel/releases/download/" + latestVersion
 
 	fmt.Fprintf(os.Stderr, "Downloading '%s' release.\n", latestRelease)
 
@@ -157,6 +157,11 @@ func run() int {
 	if err := exec.Command("tar", "-zxvf", tarPath, "-C", "/").Run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't extract "+tarPath+" : "+err.Error())
 		return 1
+	}
+
+	metadata.KernelVersion = latestVersion
+	if err := pi64.WriteMetadata(metadata); err != nil {
+		fmt.Fprintln(os.Stderr, "Couldn't write metadata : "+err.Error())
 	}
 
 	fmt.Fprintln(os.Stderr, "Your kernel has been updated! You'll have to reboot for this to take effect.")
