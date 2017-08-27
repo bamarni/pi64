@@ -11,6 +11,31 @@ cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../linux/boot
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=$(dirname $PWD)/linux modules_install
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_HDR_PATH=$(dirname $PWD)/linux/usr headers_install
 
+kernelversion=$(make -s kernelversion)
+hdr_dir=linux-headers-$kernelversion
+
+echo "./.config" >../hdr_files
+find . -name Makefile\* -o -name Kconfig\* -o -name \*.pl >>../hdr_files
+find arch/arm64/include include scripts -type f >>../hdr_files
+find arch/arm64 -name module.lds -o -name Kbuild.platforms -o -name Platform>>../hdr_files
+
+find $(find arch/arm64 -name include -o -name scripts -type d) -type f>>../hdr_files
+
+if grep -q '^CONFIG_STACK_VALIDATION=y' .config ; then
+	find tools/objtool -type f -executable>>../hdr_files
+fi
+
+find arch/arm64/include Module.symvers include scripts -type f>>../hdr_files
+
+if grep -q '^CONFIG_GCC_PLUGINS=y' .config ; then
+	find scripts/gcc-plugins -name \*.so -o -name gcc-common.h>>../hdr_files
+fi
+
+mkdir -p ../linux/usr/src/$hdr_dir
+ln -sf /usr/src/linux-headers-$kernelversion ../linux/lib/modules/$kernelversion/build
+unlink ../linux/lib/modules/$kernelversion/source
+rsync -a --files-from=../hdr_files ./ ../linux/usr/src/$hdr_dir
+
 cd ..
 
 
