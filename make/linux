@@ -11,8 +11,8 @@ cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../linux/boot
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=$(dirname $PWD)/linux modules_install
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_HDR_PATH=$(dirname $PWD)/linux/usr headers_install
 
-kernelversion=$(make -s kernelversion)
-hdr_dir=linux-headers-$kernelversion
+kernelversion=$(make -s kernelversion)-pi64+
+hdr_dir=linux-headers-${kernelversion}
 
 echo "./.config" >../hdr_files
 find . -name Makefile\* -o -name Kconfig\* -o -name \*.pl >>../hdr_files
@@ -32,7 +32,7 @@ if grep -q '^CONFIG_GCC_PLUGINS=y' .config ; then
 fi
 
 mkdir -p ../linux/usr/src/$hdr_dir
-ln -sf /usr/src/linux-headers-$kernelversion ../linux/lib/modules/$kernelversion/build
+ln -snf /usr/src/linux-headers-$kernelversion ../linux/lib/modules/$kernelversion/build
 unlink ../linux/lib/modules/$kernelversion/source
 rsync -a --files-from=../hdr_files ./ ../linux/usr/src/$hdr_dir
 
