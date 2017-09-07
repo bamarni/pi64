@@ -24,6 +24,16 @@ On the lite version, SSH is enabled by default.
 
 ## FAQ
 
+### How do I update the Linux Kernel?
+
+You can upgrade the Linux Kernel using this command :
+
+    sudo pi64-update
+
+This would make sure the latest release from https://github.com/bamarni/pi64-kernel is installed.
+
+*Do not use `apt-get` to install or update a kernel, kernel modules or kernel headers as this is not supported.*
+
 ### Can I still run 32-bit programs with pi64?
 
 You should be able to run 32-bit programs out of the box as long as they're statically linked. You can check this with the `file` command : 
