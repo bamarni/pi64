@@ -23,6 +23,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* \
     && go get \
         github.com/aktau/github-release \
+        github.com/cheggaaa/pb \
         golang.org/x/crypto/openpgp
 
 WORKDIR $GOPATH/src/github.com/bamarni/pi64

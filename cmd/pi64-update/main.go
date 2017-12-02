@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/bamarni/pi64/pkg/pi64"
+	"github.com/cheggaaa/pb"
 	"golang.org/x/crypto/openpgp"
 )
 
@@ -148,7 +149,15 @@ func run() int {
 	}
 	defer sig.Body.Close()
 
-	_, err = openpgp.CheckDetachedSignature(keyring, io.TeeReader(tarResp.Body, tarFile), sig.Body)
+	bar := pb.New64(tarResp.ContentLength).SetUnits(pb.U_BYTES)
+	bar.Start()
+
+	// Wrap the response body to :
+	// - a TeeReader to check against the PGP signature
+	// - a proxy reader for the progress bar display
+	reader := bar.NewProxyReader(io.TeeReader(tarResp.Body, tarFile))
+
+	_, err = openpgp.CheckDetachedSignature(keyring, reader, sig.Body)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "Couldn't verify signature : "+err.Error())
 		return 1
