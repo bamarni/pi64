@@ -45,6 +45,11 @@ wget -P root-$version/lib/firmware/brcm https://github.com/RPi-Distro/firmware-n
 		return err
 	}
 
+	fmt.Fprintln(os.Stderr, "   Creating /boot/config.txt...")
+	if err := ioutil.WriteFile(bootDir+"/config.txt", []byte("dtparam=audio=on"), 0644); err != nil {
+		return err
+	}
+
 	fmt.Fprintln(os.Stderr, "   Unmounting filesystems...")
 	if err := bootPart.Unmount(syscall.MNT_DETACH); err != nil {
 		return err

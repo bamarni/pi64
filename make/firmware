@@ -9,5 +9,3 @@ git clone --depth=1 https://github.com/raspberrypi/firmware
 cd firmware/boot
 
 rm {*.dtb,*.img}
-
-echo "dtparam=audio=on" > config.txt

@@ -29,6 +29,10 @@ command:
       - CONFIG_VIDEO_BCM2835=m
 
 file:
+  /boot/config.txt:
+    exists: true
+    contains:
+      - dtparam=audio=on
   /dev/vchiq:
     exists: true
   /dev/vcio:
