@@ -2,10 +2,16 @@
 
 all: build/pi64-lite.zip build/pi64-desktop.zip
 
-build/pi64-lite.zip: build/linux build/userland build/firmware
+build/pi64-lite.zip: build/pi64-lite.img
+	zip -9 -j build/pi64-lite.zip build/pi64-lite.img
+
+build/pi64-desktop.zip: build/pi64-desktop.img
+	zip -9 -j build/pi64-desktop.zip build/pi64-desktop.img
+
+build/pi64-lite.img: build/linux build/userland build/firmware
 	pi64-build -build-dir ./build -version lite
 
-build/pi64-desktop.zip: build/linux build/userland build/firmware
+build/pi64-desktop.img: build/linux build/userland build/firmware
 	pi64-build -build-dir ./build -version desktop
 
 build/linux.tar.gz.sig: build/linux.tar.gz

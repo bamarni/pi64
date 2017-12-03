@@ -104,9 +104,5 @@ wget -P root-$version/lib/firmware/brcm https://github.com/RPi-Distro/firmware-n
 
 	syscall.Sync()
 
-	fmt.Fprintln(os.Stderr, "   Compressing image...")
-	if err := runCommand("zip", "-9", "-j", buildDir+"/pi64-"+version+".zip", image.Path()); err != nil {
-		return err
-	}
-	return os.Remove(image.Path())
+	return nil
 }

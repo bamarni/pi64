@@ -142,5 +142,4 @@ iface wlan0 inet manual
 	}
 
 	return os.Remove("/usr/bin/qemu-aarch64-static")
-
 }
