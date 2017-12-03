@@ -4,7 +4,7 @@ set -ex
 
 mkdir -p build && cd build
 
-git clone --depth=1 -b rpi-4.11.y https://github.com/raspberrypi/linux.git linux-src
+git clone --depth=1 -b rpi-4.14.y https://github.com/raspberrypi/linux.git linux-src
 
 cd linux-src
 

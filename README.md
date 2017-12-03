@@ -1,6 +1,8 @@
 # pi64
 
-pi64 is an experimental 64-bit OS for the Raspberry Pi 3. It is based on Debian Stretch and backed by a 4.11 Linux kernel.
+pi64 is a 64-bit OS for the Raspberry Pi 3, backed by a 4.14 Linux kernel.
+
+It is essentially a minimalist Debian distribution shipping with systemd and a basic networking setup, just enough to let you boot and run `apt-get`!
 
 ## Releases
 
@@ -24,6 +26,12 @@ On the lite version, SSH is enabled by default.
 
 ## FAQ
 
+- [How do I update the Linux Kernel?](#how-do-i-update-the-linux-kernel)
+- [Can I still run 32-bit programs with pi64?](#can-i-still-run-32-bit-programs-with-pi64)
+- [How can I remove SSH?](#how-can-i-remove-ssh)
+- [Is there a way to run custom post-installation steps?](#is-there-a-way-to-run-custom-post-installation-steps)
+- [How to build pi64 from source?](#how-to-build-pi64-from-source)
+
 ### How do I update the Linux Kernel?
 
 You can upgrade the Linux Kernel using this command :
@@ -36,7 +44,7 @@ This would make sure the latest release from https://github.com/bamarni/pi64-ker
 
 ### Can I still run 32-bit programs with pi64?
 
-You should be able to run 32-bit programs out of the box as long as they're statically linked. You can check this with the `file` command : 
+You should be able to run 32-bit programs out of the box as long as they're statically linked. You can check this with the `file` command :
 
     $ file ./my-executable
     ./my-executable: ELF 32-bit LSB executable, ARM, EABI5 version 1 (SYSV), statically linked, not stripped
@@ -61,3 +69,23 @@ of an extra monitor / keyboard. If you want to remove it, just run :
 You can just drop a file called `setup` on the boot partition. When the installer notices that file at `/boot/setup`, it will automatically execute it using bash when installation finishes.
 
 This can be useful if you want to distribute your own image based on pi64.
+
+### How to build pi64 from source?
+
+If you feel adventurous and want to build pi64 from source, you can easily do so through Docker.
+
+This is mostly useful if you want to make a custom Kernel build or want to tweak the distribution to your needs.
+
+To proceed with the build, run the following command :
+
+    docker build -t pi64 .
+
+Then you can build an image of the lite or desktop version :
+
+    docker run -it --privileged -v $PWD:/root/pi64 -v /opt/vc:/opt/vc  -w /root/pi64 \
+        pi64 make build/pi64-lite.img
+
+    docker run -it --privileged -v $PWD:/root/pi64 -v /opt/vc:/opt/vc  -w /root/pi64 \
+        pi64 make build/pi64-desktop.img
+
+The image will appear under the `./build` folder.
