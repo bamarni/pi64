@@ -1,4 +1,4 @@
-FROM ubuntu:17.04
+FROM ubuntu:17.10
 
 ENV GOPATH=/go PATH=/go/bin:/usr/lib/go-1.8/bin:$PATH
 
