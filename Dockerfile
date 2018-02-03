@@ -19,6 +19,7 @@ RUN apt-get update \
         dosfstools \
         kpartx \
         golang-1.8-go \
+        rsync \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && go get \
