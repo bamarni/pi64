@@ -7,7 +7,7 @@ cd build/linux-src
 mkdir -p ../linux/boot ../linux/usr/bin ../linux/opt
 
 cp arch/arm64/boot/Image ../linux/boot/kernel8.img
-cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b.dtb ../linux/boot
+cp arch/arm64/boot/dts/broadcom/bcm2710-rpi-3-b-plus.dtb ../linux/boot
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_MOD_PATH=$(dirname $PWD)/linux modules_install
 make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- INSTALL_HDR_PATH=$(dirname $PWD)/linux/usr headers_install
 
