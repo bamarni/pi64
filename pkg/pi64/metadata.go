@@ -24,7 +24,7 @@ func ReadMetadata() (Metadata, error) {
 }
 
 func WriteMetadata(metadata Metadata) error {
-	file, err := os.OpenFile(metadataPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 644)
+	file, err := os.OpenFile(metadataPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
 	}
